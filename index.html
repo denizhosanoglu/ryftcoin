@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RYFTCOIN | Security Protocol</title>
+    <title>RYFTCOIN | Security Bypass</title>
     <style>
         body {
             background-color: #0a0a0a;
-            color: #00ff41; /* Siber Yeşil */
+            color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
             display: flex;
             flex-direction: column;
@@ -20,29 +20,38 @@
         }
 
         #game-container {
-            width: 600px;
-            height: 200px;
-            border-bottom: 2px solid #333;
+            width: 800px;
+            height: 300px;
+            border: 2px solid #333;
             position: relative;
             background: #0f0f0f;
+            overflow: hidden; /* Dışarı taşan engelleri gizler */
         }
 
         #dino {
             width: 40px;
             height: 40px;
-            background-color: #00ff41;
+            background-color: #ffffff; /* Beyaz karakter */
             position: absolute;
-            bottom: 0;
+            top: 130px; /* Ortadan başlar */
             left: 50px;
+            border-radius: 4px;
         }
 
-        .cactus {
-            width: 20px;
-            height: 40px;
-            background-color: #ff3e3e; /* Engel Rengi */
+        .obstacle {
+            width: 30px;
             position: absolute;
+            background-color: #ff3e3e; /* Kırmızı engeller */
+        }
+
+        .obstacle-top {
+            top: 0;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .obstacle-bottom {
             bottom: 0;
-            right: -20px;
+            border-radius: 4px 4px 0 0;
         }
 
         #score {
@@ -52,26 +61,28 @@
         }
 
         .info {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             color: #666;
-            font-size: 0.8rem;
+            font-size: 1.2rem;
+            letter-spacing: 5px;
         }
 
+        /* Zıplama Animasyonu */
         .jump {
             animation: jump 0.5s linear;
         }
 
         @keyframes jump {
-            0% { bottom: 0; }
-            30% { bottom: 100px; }
-            70% { bottom: 100px; }
-            100% { bottom: 0; }
+            0% { top: 130px; }
+            30% { top: 60px; }
+            70% { top: 60px; }
+            100% { top: 130px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="info">Sistem Yükleniyor... Beklerken Güvenlik Protokolünü Aş (Boşluk Tuşu)</div>
+    <div class="info">PRESS SPACE</div>
     <div id="game-container">
         <div id="dino"></div>
     </div>
@@ -82,9 +93,10 @@
         const container = document.getElementById("game-container");
         const scoreElement = document.getElementById("score");
         let score = 0;
+        let isGameOver = false;
 
         function jump() {
-            if (dino.classList != "jump") {
+            if (!isGameOver && dino.classList != "jump") {
                 dino.classList.add("jump");
                 setTimeout(function () {
                     dino.classList.remove("jump");
@@ -92,31 +104,57 @@
             }
         }
 
-        function createCactus() {
-            const cactus = document.createElement("div");
-            cactus.classList.add("cactus");
-            container.appendChild(cactus);
+        function createObstaclePair() {
+            if (isGameOver) return;
 
-            let cactusPos = 600;
+            const obstacleTop = document.createElement("div");
+            const obstacleBottom = document.createElement("div");
+            obstacleTop.classList.add("obstacle", "obstacle-top");
+            obstacleBottom.classList.add("obstacle", "obstacle-bottom");
+            
+            // Engellerin yüksekliğini rastgele ayarla (toplam 300px - karakter boşluğu)
+            const topHeight = Math.floor(Math.random() * 150) + 20; // 20-170px arası
+            const gap = 110; // Karakterin geçebileceği boşluk
+            const bottomHeight = 300 - topHeight - gap;
+
+            obstacleTop.style.height = topHeight + "px";
+            obstacleBottom.style.height = bottomHeight + "px";
+            
+            container.appendChild(obstacleTop);
+            container.appendChild(obstacleBottom);
+
+            let obstaclePos = 800;
             let timer = setInterval(function () {
-                if (cactusPos < -20) {
+                if (isGameOver) {
                     clearInterval(timer);
-                    container.removeChild(cactus);
+                    return;
+                }
+
+                if (obstaclePos < -30) {
+                    clearInterval(timer);
+                    container.removeChild(obstacleTop);
+                    container.removeChild(obstacleBottom);
                     score++;
                     scoreElement.innerHTML = "SCORE: " + score;
                 }
 
                 // Çarpışma Testi
-                let dinoTop = parseInt(window.getComputedStyle(dino).getPropertyValue("bottom"));
-                if (cactusPos > 50 && cactusPos < 90 && dinoTop <= 40) {
-                    alert("SİSTEM ÇÖKTÜ! SKORUN: " + score);
-                    score = 0;
-                    scoreElement.innerHTML = "SCORE: 0";
-                    cactusPos = 600;
+                let dinoTop = parseInt(window.getComputedStyle(dino).getPropertyValue("top"));
+                let dinoBottom = dinoTop + 40;
+
+                // Yatay çarpışma aralığı
+                if (obstaclePos > 50 && obstaclePos < 90) {
+                    // Dikey çarpışma testi
+                    if (dinoTop < topHeight || dinoBottom > (300 - bottomHeight)) {
+                        isGameOver = true;
+                        alert("SECURITY BREACH DETECTED!\nSKORUN: " + score);
+                        location.reload(); // Sayfayı yenileyip oyunu sıfırlar
+                    }
                 }
 
-                cactusPos -= 5;
-                cactus.style.left = cactusPos + "px";
+                obstaclePos -= 5;
+                obstacleTop.style.left = obstaclePos + "px";
+                obstacleBottom.style.left = obstaclePos + "px";
             }, 20);
         }
 
@@ -126,8 +164,8 @@
             }
         });
 
-        // Her 1.5 saniyede bir yeni engel
-        setInterval(createCactus, 1500);
+        // Her 2 saniyede bir yeni engel çifti (hızı ayarlayabilirsin)
+        setInterval(createObstaclePair, 2000);
     </script>
 </body>
 </html>
