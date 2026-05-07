@@ -174,9 +174,9 @@
             
             if (records.length < 5 || finalScore > records[records.length - 1].score) {
                 setTimeout(() => {
-                    let name = prompt("NEW HIGH SCORE! Enter 3 letters:", "RYF");
+                    let name = prompt("NEW HIGH SCORE! Enter 10 letters:", "RYF");
                     if (name) {
-                        name = name.substring(0, 3).toUpperCase();
+                        name = name.substring(0, 10).toUpperCase();
                         records.push({ name: name, score: finalScore });
                         records.sort((a, b) => b.score - a.score); 
                         records = records.slice(0, 5); 
