@@ -166,9 +166,9 @@
             if (records.length < 5 || finalScore > records[records.length - 1].score) {
                 // Oyunu durdurduğumuz için ufak bir gecikmeyle alert veriyoruz ki ekran çizilsin
                 setTimeout(() => {
-                    let name = prompt("NEW HIGH SCORE! Enter 3 letters:", "RYF");
+                    let name = prompt("NEW HIGH SCORE! Enter your username (max 10 letter):", "RYF");
                     if (name) {
-                        name = name.substring(0, 3).toUpperCase();
+                        name = name.substring(0, 10).toUpperCase();
                         records.push({ name: name, score: finalScore });
                         records.sort((a, b) => b.score - a.score); // Büyükten küçüğe sırala
                         records = records.slice(0, 5); // Sadece ilk 5'i tut
