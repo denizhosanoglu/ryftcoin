@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RYFTCOIN | Online PvP Protocol</title>
+    <title>RYFTCOIN | Secure P2P Protocol</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
@@ -14,7 +14,6 @@
             overflow: hidden; text-transform: uppercase; user-select: none;
         }
 
-        /* Lobi Ekranı */
         #lobby {
             border: 1px solid #333; padding: 40px;
             background: linear-gradient(145deg, #0f0f0f, #050505);
@@ -36,8 +35,12 @@
             margin-bottom: 10px; letter-spacing: 2px;
         }
         #room-code { color: #fff; margin-top: 15px; letter-spacing: 2px; font-weight: bold; }
+        
+        /* Hata mesajları için özel stil */
+        #status { margin-top: 15px; font-size: 0.85rem; letter-spacing: 1px; min-height: 20px; }
+        .error-text { color: #ff003c; text-shadow: 0 0 5px #ff003c; }
+        .success-text { color: #00ff41; }
 
-        /* Oyun Ekranı */
         #game-wrapper { display: none; flex-direction: column; align-items: center; }
         #game-container {
             width: 800px; height: 350px; position: relative;
@@ -76,17 +79,17 @@
 
     <div id="lobby">
         <h2>NETWORK UPLINK</h2>
-        <button class="btn btn-white" onclick="createRoom()">1. CREATE SECURE ROOM</button>
+        <button class="btn btn-white" id="btn-create" onclick="createRoom()">1. CREATE SECURE ROOM</button>
         <div id="room-code"></div>
         <hr style="border-color:#333; margin: 30px 0;">
         <input type="text" id="join-id" placeholder="PASTE ROOM CODE HERE">
-        <button class="btn" onclick="joinRoom()">2. JOIN ROOM</button>
-        <div id="status" style="margin-top: 15px; color: #888; font-size: 0.8rem;">WAITING FOR CONNECTION...</div>
+        <button class="btn" id="btn-join" onclick="joinRoom()">2. JOIN ROOM</button>
+        <div id="status" style="color: #888;">SYSTEM STANDBY...</div>
     </div>
 
     <div id="game-wrapper">
         <div style="margin-bottom: 15px; color: #555; letter-spacing: 2px;">
-            <span style="color:#fff;">YOU: [SPACEBAR]</span> // P2P CONNECTION ESTABLISHED
+            <span style="color:#fff;">YOU: [SPACEBAR]</span> // P2P CONNECTION SECURED
         </div>
         
         <div id="game-container">
@@ -105,67 +108,119 @@
     </div>
 
     <script>
-        // P2P Ağ Değişkenleri
+        // Güvenlik Duvarı Delici STUN Konfigürasyonu
+        const peerConfig = {
+            config: {
+                'iceServers': [
+                    { url: 'stun:stun.l.google.com:19302' },
+                    { url: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        };
+
         let peer = null;
         let conn = null;
         let isHost = false;
         let myPlayer = null;
 
-        // Oyun Değişkenleri
         const p1 = { el: document.getElementById("p1"), isGrounded: true, isDead: false };
         const p2 = { el: document.getElementById("p2"), isGrounded: true, isDead: false };
         const container = document.getElementById("game-container");
+        const statusEl = document.getElementById("status");
+        
         let gameSpeed = 6;
         let isGameOver = false;
         let lasers = [];
         let spawnInterval;
         let animationFrameId;
 
+        // UI Güncelleyici
+        function updateStatus(msg, isError = false, isSuccess = false) {
+            statusEl.innerText = msg;
+            statusEl.className = '';
+            if (isError) statusEl.classList.add('error-text');
+            if (isSuccess) statusEl.classList.add('success-text');
+        }
+
+        function destroyPeer() {
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+        }
+
         // 1. ODA KUR (HOST)
         function createRoom() {
-            document.getElementById('status').innerText = "GENERATING SECURE KEY...";
-            peer = new Peer(); 
+            document.getElementById('btn-create').disabled = true;
+            document.getElementById('btn-join').disabled = true;
+            updateStatus("GENERATING SECURE KEY...");
+            
+            destroyPeer();
+            peer = new Peer(peerConfig); 
+            
             peer.on('open', (id) => {
                 isHost = true;
-                myPlayer = p1; // Host her zaman P1 (Beyaz)
+                myPlayer = p1; 
                 document.getElementById('room-code').innerText = id;
-                document.getElementById('status').innerText = "WAITING FOR GUEST TO JOIN...";
+                updateStatus("WAITING FOR GUEST TO JOIN...", false, true);
                 
                 peer.on('connection', (connection) => {
                     conn = connection;
                     setupNetworkEvents();
                 });
             });
+
+            peer.on('error', (err) => {
+                updateStatus("ERROR: " + err.type, true);
+                document.getElementById('btn-create').disabled = false;
+                document.getElementById('btn-join').disabled = false;
+            });
         }
 
         // 2. ODAYA KATIL (GUEST)
         function joinRoom() {
             let roomCode = document.getElementById('join-id').value.trim();
-            if(!roomCode) return;
-            document.getElementById('status').innerText = "CONNECTING TO HOST...";
+            if(!roomCode) {
+                updateStatus("PLEASE ENTER A VALID CODE", true);
+                return;
+            }
+
+            document.getElementById('btn-create').disabled = true;
+            document.getElementById('btn-join').disabled = true;
+            updateStatus("CONNECTING TO HOST...");
             
-            peer = new Peer();
+            destroyPeer();
+            peer = new Peer(peerConfig);
+            
             peer.on('open', () => {
                 isHost = false;
-                myPlayer = p2; // Guest her zaman P2 (Mavi)
-                conn = peer.connect(roomCode);
+                myPlayer = p2; 
+                conn = peer.connect(roomCode, { reliable: true });
                 setupNetworkEvents();
+            });
+
+            peer.on('error', (err) => {
+                updateStatus("CONNECTION FAILED: " + err.type, true);
+                document.getElementById('btn-create').disabled = false;
+                document.getElementById('btn-join').disabled = false;
             });
         }
 
         // AĞ TRAFİĞİ DİNLEME
         function setupNetworkEvents() {
             conn.on('open', () => {
-                document.getElementById('lobby').style.display = 'none';
-                document.getElementById('game-wrapper').style.display = 'flex';
-                
-                if (isHost) {
-                    // Host oyunu başlatır ve Guest'e komut gönderir
-                    setTimeout(() => {
-                        conn.send({ type: 'start' });
-                        startGame();
-                    }, 1500);
-                }
+                updateStatus("CONNECTION ESTABLISHED!", false, true);
+                setTimeout(() => {
+                    document.getElementById('lobby').style.display = 'none';
+                    document.getElementById('game-wrapper').style.display = 'flex';
+                    
+                    if (isHost) {
+                        setTimeout(() => {
+                            conn.send({ type: 'start' });
+                            startGame();
+                        }, 1000);
+                    }
+                }, 500);
             });
 
             conn.on('data', (data) => {
@@ -176,6 +231,11 @@
                     executeFlip(targetObj);
                 }
                 if (data.type === 'die') killPlayer((data.player === 'p1') ? p1 : p2);
+            });
+
+            conn.on('close', () => {
+                alert("NETWORK DISCONNECTED. REFRESH PAGE.");
+                location.reload();
             });
         }
 
@@ -200,14 +260,13 @@
             lasers.push({ element: laser, x: 800, isTop: isTop, height: height });
         }
 
-        // SADECE HOST YENİ LAZER ÜRETİR VE GUEST'E "AYNISINI ÇİZ" DER
         function hostSpawnLaser() {
             if (isGameOver) return;
             const isTop = Math.random() > 0.5;
             const height = Math.floor(Math.random() * 120) + 70; 
             
-            createLaser(isTop, height); // Host kendi ekranına çizer
-            conn.send({ type: 'spawn', isTop: isTop, height: height }); // Guest'e emreder
+            createLaser(isTop, height); 
+            conn.send({ type: 'spawn', isTop: isTop, height: height }); 
 
             gameSpeed += 0.1;
             let nextSpawnTime = Math.max(600, 1500 - ((gameSpeed - 6) * 100));
@@ -249,7 +308,6 @@
 
                 let lLeft = l.x; let lRight = l.x + 25;
 
-                // Kendi çarpışmamı kontrol et
                 let pTop = myPlayer.el.offsetTop;
                 let pBottom = pTop + 30;
                 let myLeft = (myPlayer === p1) ? 100 : 150;
@@ -271,12 +329,11 @@
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
-        // KONTROLLER (SADECE SPACE KULLANILIR)
         document.addEventListener("keydown", function (event) {
             if (event.code === "Space" && !isGameOver && !myPlayer.isDead) {
                 event.preventDefault();
-                executeFlip(myPlayer); // Kendi ekranımda dön
-                conn.send({ type: 'flip', player: isHost ? 'p1' : 'p2' }); // Karşıya bildir
+                executeFlip(myPlayer);
+                conn.send({ type: 'flip', player: isHost ? 'p1' : 'p2' });
             }
         });
     </script>
