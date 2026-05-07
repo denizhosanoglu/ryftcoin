@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RYFTCOIN | Security Bypass</title>
     <style>
+        /* Siber Karanlık Tema ve Seçim Engelleme */
         body {
-            background-color: #0a0a0a;
+            background-color: #050505;
             color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
             display: flex;
@@ -17,155 +18,259 @@
             margin: 0;
             overflow: hidden;
             text-transform: uppercase;
+            user-select: none; /* Metin seçilmesini engeller */
         }
 
+        /* Oyun Alanı */
         #game-container {
             width: 800px;
-            height: 300px;
-            border: 2px solid #333;
+            height: 350px;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
             position: relative;
-            background: #0f0f0f;
-            overflow: hidden; /* Dışarı taşan engelleri gizler */
+            background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8) inset;
         }
 
-        #dino {
-            width: 40px;
-            height: 40px;
-            background-color: #ffffff; /* Beyaz karakter */
-            position: absolute;
-            top: 130px; /* Ortadan başlar */
-            left: 50px;
-            border-radius: 4px;
-        }
-
-        .obstacle {
+        /* Ana Karakter (Veri Paketi) */
+        #player {
             width: 30px;
+            height: 30px;
+            background-color: #fff;
             position: absolute;
-            background-color: #ff3e3e; /* Kırmızı engeller */
+            left: 100px;
+            top: 310px; /* Tabanda Başlar (350 - 30 - 10 margin) */
+            transition: top 0.35s cubic-bezier(0.25, 1, 0.5, 1); /* Çok daha pürüzsüz geçiş */
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 5px rgba(255, 255, 255, 0.5) inset;
+            z-index: 10;
         }
 
-        .obstacle-top {
-            top: 0;
-            border-radius: 0 0 4px 4px;
+        /* Düşman Lazerler */
+        .laser {
+            width: 25px;
+            position: absolute;
+            background-color: #ff003c;
+            box-shadow: 0 0 15px #ff003c, 0 0 30px #ff003c; /* Neon Parlama */
+            border-radius: 3px;
         }
+        .laser-top { top: 0; }
+        .laser-bottom { bottom: 0; }
 
-        .obstacle-bottom {
-            bottom: 0;
-            border-radius: 4px 4px 0 0;
-        }
-
-        #score {
-            margin-top: 20px;
-            font-size: 1.5rem;
-            letter-spacing: 3px;
-        }
-
-        .info {
-            margin-bottom: 20px;
-            color: #666;
+        /* Arayüz */
+        #ui-layer {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-top: 15px;
             font-size: 1.2rem;
-            letter-spacing: 5px;
+            color: #888;
+            letter-spacing: 2px;
         }
 
-        /* Zıplama Animasyonu */
-        .jump {
-            animation: jump 0.5s linear;
+        #score-display { color: #fff; text-shadow: 0 0 5px #fff; }
+
+        /* GAME OVER EKRANI */
+        #game-over-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 10, 0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            backdrop-filter: blur(2px);
         }
 
-        @keyframes jump {
-            0% { top: 130px; }
-            30% { top: 60px; }
-            70% { top: 60px; }
-            100% { top: 130px; }
+        #game-over-screen h1 {
+            color: #ff003c;
+            font-size: 3rem;
+            margin: 0 0 10px 0;
+            letter-spacing: 10px;
+            text-shadow: 0 0 20px #ff003c;
+        }
+
+        .blink {
+            animation: blinker 1.5s linear infinite;
+            color: #fff;
+            margin-top: 20px;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-    <div class="info">PRESS SPACE</div>
+    <div style="margin-bottom: 15px; color: #555; letter-spacing: 4px;">[ INITIATE GRAVITY OVERRIDE: SPACEBAR ]</div>
+    
     <div id="game-container">
-        <div id="dino"></div>
+        <div id="player"></div>
+        
+        <div id="game-over-screen">
+            <h1>SYSTEM FAILURE</h1>
+            <div id="final-score" style="font-size: 1.5rem; color: #aaa;">DATA EXTRACTED: 0</div>
+            <div class="blink">PRESS SPACE TO REBOOT</div>
+        </div>
     </div>
-    <div id="score">SCORE: 0</div>
+
+    <div id="ui-layer">
+        <div>STATUS: <span style="color: #00ff41;">ONLINE</span></div>
+        <div id="score-display">SCORE: 0</div>
+    </div>
 
     <script>
-        const dino = document.getElementById("dino");
+        const player = document.getElementById("player");
         const container = document.getElementById("game-container");
-        const scoreElement = document.getElementById("score");
-        let score = 0;
-        let isGameOver = false;
+        const scoreDisplay = document.getElementById("score-display");
+        const gameOverScreen = document.getElementById("game-over-screen");
+        const finalScoreDisplay = document.getElementById("final-score");
 
-        function jump() {
-            if (!isGameOver && dino.classList != "jump") {
-                dino.classList.add("jump");
-                setTimeout(function () {
-                    dino.classList.remove("jump");
-                }, 500);
+        let score = 0;
+        let gameSpeed = 6; // Başlangıç hızı
+        let isGameOver = false;
+        let isGrounded = true; 
+        let lasers = []; // Lazerleri takip edeceğimiz dizi
+        let spawnInterval;
+        let animationFrameId;
+
+        // Yer Çekimi Değiştirme
+        function flipGravity() {
+            if (isGameOver) {
+                resetGame();
+                return;
+            }
+            if (isGrounded) {
+                player.style.top = "10px"; // Tavana sıfırlanma payı
+                isGrounded = false;
+            } else {
+                player.style.top = "310px"; // Tabana sıfırlanma payı
+                isGrounded = true;
             }
         }
 
-        function createObstaclePair() {
+        // Lazer Üretimi
+        function spawnLaser() {
             if (isGameOver) return;
 
-            const obstacleTop = document.createElement("div");
-            const obstacleBottom = document.createElement("div");
-            obstacleTop.classList.add("obstacle", "obstacle-top");
-            obstacleBottom.classList.add("obstacle", "obstacle-bottom");
+            const laser = document.createElement("div");
+            laser.classList.add("laser");
             
-            // Engellerin yüksekliğini rastgele ayarla (toplam 300px - karakter boşluğu)
-            const topHeight = Math.floor(Math.random() * 150) + 20; // 20-170px arası
-            const gap = 110; // Karakterin geçebileceği boşluk
-            const bottomHeight = 300 - topHeight - gap;
-
-            obstacleTop.style.height = topHeight + "px";
-            obstacleBottom.style.height = bottomHeight + "px";
+            const isTop = Math.random() > 0.5;
+            laser.classList.add(isTop ? "laser-top" : "laser-bottom");
             
-            container.appendChild(obstacleTop);
-            container.appendChild(obstacleBottom);
+            // Lazer boyutu (70px ile 190px arası)
+            const height = Math.floor(Math.random() * 120) + 70; 
+            laser.style.height = height + "px";
+            laser.style.left = "800px"; // Ekranın en sağından başla
+            
+            container.appendChild(laser);
+            
+            // Lazer objesini listeye ekle
+            lasers.push({
+                element: laser,
+                x: 800,
+                isTop: isTop,
+                height: height,
+                passed: false
+            });
 
-            let obstaclePos = 800;
-            let timer = setInterval(function () {
-                if (isGameOver) {
-                    clearInterval(timer);
-                    return;
-                }
+            // Zorluk artışı: Yeni lazer gelme süresi hızlandıkça kısalır
+            let nextSpawnTime = Math.max(700, 1500 - (score * 20));
+            spawnInterval = setTimeout(spawnLaser, nextSpawnTime);
+        }
 
-                if (obstaclePos < -30) {
-                    clearInterval(timer);
-                    container.removeChild(obstacleTop);
-                    container.removeChild(obstacleBottom);
-                    score++;
-                    scoreElement.innerHTML = "SCORE: " + score;
-                }
+        // Profesyonel Oyun Döngüsü (Game Loop)
+        function gameLoop() {
+            if (isGameOver) return;
 
-                // Çarpışma Testi
-                let dinoTop = parseInt(window.getComputedStyle(dino).getPropertyValue("top"));
-                let dinoBottom = dinoTop + 40;
+            // Oyuncunun anlık kesin pozisyonunu al (Geçiş anında bile kusursuz Hitbox için)
+            let playerRect = player.getBoundingClientRect();
+            let containerRect = container.getBoundingClientRect();
+            
+            // Oyuncunun kutu içindeki X ve Y koordinatları
+            let pTop = playerRect.top - containerRect.top;
+            let pBottom = pTop + 30; // 30px karakter boyu
+            let pLeft = playerRect.left - containerRect.left;
+            let pRight = pLeft + 30;
 
-                // Yatay çarpışma aralığı
-                if (obstaclePos > 50 && obstaclePos < 90) {
-                    // Dikey çarpışma testi
-                    if (dinoTop < topHeight || dinoBottom > (300 - bottomHeight)) {
-                        isGameOver = true;
-                        alert("SECURITY BREACH DETECTED!\nSKORUN: " + score);
-                        location.reload(); // Sayfayı yenileyip oyunu sıfırlar
+            for (let i = 0; i < lasers.length; i++) {
+                let l = lasers[i];
+                l.x -= gameSpeed; // Lazerleri sola kaydır
+                l.element.style.left = l.x + "px";
+
+                // Çarpışma Kontrolü (Hitbox Math)
+                let lLeft = l.x;
+                let lRight = l.x + 25; // 25px lazer genişliği
+
+                if (pRight > lLeft && pLeft < lRight) {
+                    if (l.isTop && pTop < l.height) {
+                        triggerGameOver();
+                    } else if (!l.isTop && pBottom > (350 - l.height)) {
+                        triggerGameOver();
                     }
                 }
 
-                obstaclePos -= 5;
-                obstacleTop.style.left = obstaclePos + "px";
-                obstacleBottom.style.left = obstaclePos + "px";
-            }, 20);
+                // Lazer oyuncuyu geçtiyse skoru artır
+                if (!l.passed && l.x < pLeft) {
+                    l.passed = true;
+                    score++;
+                    scoreDisplay.innerText = "SCORE: " + score;
+                    gameSpeed += 0.15; // Hızlanma
+                }
+
+                // Ekranda çıkan lazeri sil
+                if (l.x < -40) {
+                    l.element.remove();
+                    lasers.splice(i, 1);
+                    i--;
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
+        function triggerGameOver() {
+            isGameOver = true;
+            clearTimeout(spawnInterval);
+            cancelAnimationFrame(animationFrameId);
+            finalScoreDisplay.innerText = "DATA EXTRACTED: " + score + " BLOCKS";
+            gameOverScreen.style.display = "flex";
+        }
+
+        function resetGame() {
+            // Ekrani Temizle
+            lasers.forEach(l => l.element.remove());
+            lasers = [];
+            score = 0;
+            gameSpeed = 6;
+            scoreDisplay.innerText = "SCORE: 0";
+            gameOverScreen.style.display = "none";
+            isGameOver = false;
+            
+            // Karakteri tabana al
+            player.style.top = "310px";
+            isGrounded = true;
+
+            // Oyunu Başlat
+            spawnLaser();
+            gameLoop();
+        }
+
+        // Kontroller
         document.addEventListener("keydown", function (event) {
             if (event.code === "Space") {
-                jump();
+                event.preventDefault(); // Tarayıcının aşağı kaymasını KESİNLİKLE engeller
+                flipGravity();
             }
         });
 
-        // Her 2 saniyede bir yeni engel çifti (hızı ayarlayabilirsin)
-        setInterval(createObstaclePair, 2000);
+        // Oyunu İlk Başlatma
+        spawnLaser();
+        gameLoop();
     </script>
 </body>
 </html>
