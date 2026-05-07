@@ -3,149 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RYFTCOIN | 1v1 Security Bypass</title>
+    <title>RYFTCOIN | Online PvP Protocol</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
-            background-color: #050505;
-            color: #ffffff;
+            background-color: #050505; color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            text-transform: uppercase;
-            user-select: none;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; height: 100vh; margin: 0;
+            overflow: hidden; text-transform: uppercase; user-select: none;
         }
 
+        /* Lobi Ekranı */
+        #lobby {
+            border: 1px solid #333; padding: 40px;
+            background: linear-gradient(145deg, #0f0f0f, #050505);
+            box-shadow: 0 0 20px rgba(0,229,255,0.1);
+            text-align: center; z-index: 50; width: 400px;
+        }
+        #lobby h2 { letter-spacing: 5px; color: #00e5ff; margin-bottom: 30px; }
+        .btn {
+            background: transparent; border: 1px solid #00e5ff; color: #00e5ff;
+            padding: 10px 20px; cursor: pointer; margin: 10px; transition: 0.3s;
+            font-family: inherit; font-size: 1rem; width: 80%;
+        }
+        .btn:hover { background: rgba(0,229,255,0.1); box-shadow: 0 0 10px #00e5ff; }
+        .btn-white { border-color: #fff; color: #fff; }
+        .btn-white:hover { background: rgba(255,255,255,0.1); box-shadow: 0 0 10px #fff; }
+        input {
+            background: #111; border: 1px solid #444; color: #fff;
+            padding: 10px; width: 75%; text-align: center; font-family: inherit;
+            margin-bottom: 10px; letter-spacing: 2px;
+        }
+        #room-code { color: #fff; margin-top: 15px; letter-spacing: 2px; font-weight: bold; }
+
+        /* Oyun Ekranı */
+        #game-wrapper { display: none; flex-direction: column; align-items: center; }
         #game-container {
-            width: 800px;
-            height: 350px;
-            border-top: 1px solid #333;
-            border-bottom: 1px solid #333;
-            position: relative;
+            width: 800px; height: 350px; position: relative;
             background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
-            overflow: hidden;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8) inset;
+            border-top: 1px solid #333; border-bottom: 1px solid #333;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8) inset; overflow: hidden;
         }
 
-        /* Ortak Karakter Özellikleri */
         .player {
-            width: 30px;
-            height: 30px;
-            position: absolute;
-            transition: top 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            border-radius: 4px;
-            z-index: 10;
+            width: 30px; height: 30px; position: absolute;
+            transition: top 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 4px; z-index: 10;
         }
-
-        /* PLAYER 1 (Beyaz) */
-        #p1 {
-            background-color: #fff;
-            left: 100px;
-            top: 310px;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 5px rgba(255, 255, 255, 0.5) inset;
-        }
-
-        /* PLAYER 2 (Siber Mavi) */
-        #p2 {
-            background-color: #00e5ff;
-            left: 150px; /* Biraz daha geriden gelir */
-            top: 310px;
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.8), 0 0 5px rgba(0, 229, 255, 0.5) inset;
-        }
+        #p1 { background-color: #fff; left: 100px; top: 310px; box-shadow: 0 0 15px rgba(255,255,255,0.8); }
+        #p2 { background-color: #00e5ff; left: 150px; top: 310px; box-shadow: 0 0 15px rgba(0,229,255,0.8); }
 
         .laser {
-            width: 25px;
-            position: absolute;
-            background-color: #ff003c;
-            box-shadow: 0 0 15px #ff003c, 0 0 30px #ff003c;
-            border-radius: 3px;
+            width: 25px; position: absolute; background-color: #ff003c;
+            box-shadow: 0 0 15px #ff003c; border-radius: 3px;
         }
         .laser-top { top: 0; }
         .laser-bottom { bottom: 0; }
 
         #ui-layer {
-            display: flex;
-            justify-content: space-between;
-            width: 800px;
-            margin-top: 15px;
-            font-size: 1.2rem;
-            color: #888;
-            letter-spacing: 2px;
+            display: flex; justify-content: space-between; width: 800px;
+            margin-top: 15px; font-size: 1.2rem; letter-spacing: 2px;
         }
-
-        .p1-text { color: #fff; text-shadow: 0 0 5px #fff; }
-        .p2-text { color: #00e5ff; text-shadow: 0 0 5px #00e5ff; }
-
         #game-over-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.85);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            backdrop-filter: blur(2px);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10,10,10,0.85); display: none;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 20;
         }
-
-        #game-over-screen h1 {
-            font-size: 3rem;
-            margin: 0 0 10px 0;
-            letter-spacing: 5px;
-        }
-
-        .blink {
-            animation: blinker 1.5s linear infinite;
-            color: #fff;
-            margin-top: 20px;
-        }
-
-        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div style="margin-bottom: 15px; color: #555; letter-spacing: 2px;">
-        <span class="p1-text">P1: [W]</span> // PVP PROTOCOL // <span class="p2-text">P2: [UP ARROW]</span>
+    <div id="lobby">
+        <h2>NETWORK UPLINK</h2>
+        <button class="btn btn-white" onclick="createRoom()">1. CREATE SECURE ROOM</button>
+        <div id="room-code"></div>
+        <hr style="border-color:#333; margin: 30px 0;">
+        <input type="text" id="join-id" placeholder="PASTE ROOM CODE HERE">
+        <button class="btn" onclick="joinRoom()">2. JOIN ROOM</button>
+        <div id="status" style="margin-top: 15px; color: #888; font-size: 0.8rem;">WAITING FOR CONNECTION...</div>
     </div>
-    
-    <div id="game-container">
-        <div id="p1" class="player"></div>
-        <div id="p2" class="player"></div>
+
+    <div id="game-wrapper">
+        <div style="margin-bottom: 15px; color: #555; letter-spacing: 2px;">
+            <span style="color:#fff;">YOU: [SPACEBAR]</span> // P2P CONNECTION ESTABLISHED
+        </div>
         
-        <div id="game-over-screen">
-            <h1 id="winner-text">SYSTEM FAILURE</h1>
-            <div class="blink">PRESS SPACE TO REMATCH</div>
+        <div id="game-container">
+            <div id="p1" class="player"></div>
+            <div id="p2" class="player"></div>
+            
+            <div id="game-over-screen">
+                <h1 id="winner-text" style="letter-spacing: 5px;">SYSTEM FAILURE</h1>
+            </div>
+        </div>
+
+        <div id="ui-layer">
+            <div style="color: #fff;">PLAYER 1 (HOST)</div>
+            <div style="color: #00e5ff;">PLAYER 2 (GUEST)</div>
         </div>
     </div>
 
-    <div id="ui-layer">
-        <div class="p1-text">PLAYER 1: READY</div>
-        <div id="score-display" style="color: #444;">SPEED: 1.0x</div>
-        <div class="p2-text">PLAYER 2: READY</div>
-    </div>
-
     <script>
-        const p1 = { el: document.getElementById("p1"), isGrounded: true, isDead: false, top: 310, left: 100 };
-        const p2 = { el: document.getElementById("p2"), isGrounded: true, isDead: false, top: 310, left: 150 };
-        
-        const container = document.getElementById("game-container");
-        const gameOverScreen = document.getElementById("game-over-screen");
-        const winnerText = document.getElementById("winner-text");
-        const speedDisplay = document.getElementById("score-display");
+        // P2P Ağ Değişkenleri
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+        let myPlayer = null;
 
+        // Oyun Değişkenleri
+        const p1 = { el: document.getElementById("p1"), isGrounded: true, isDead: false };
+        const p2 = { el: document.getElementById("p2"), isGrounded: true, isDead: false };
+        const container = document.getElementById("game-container");
         let gameSpeed = 6;
         let isGameOver = false;
         let lasers = [];
         let spawnInterval;
         let animationFrameId;
 
-        function flipGravity(playerObj) {
-            if (isGameOver || playerObj.isDead) return;
+        // 1. ODA KUR (HOST)
+        function createRoom() {
+            document.getElementById('status').innerText = "GENERATING SECURE KEY...";
+            peer = new Peer(); 
+            peer.on('open', (id) => {
+                isHost = true;
+                myPlayer = p1; // Host her zaman P1 (Beyaz)
+                document.getElementById('room-code').innerText = id;
+                document.getElementById('status').innerText = "WAITING FOR GUEST TO JOIN...";
+                
+                peer.on('connection', (connection) => {
+                    conn = connection;
+                    setupNetworkEvents();
+                });
+            });
+        }
+
+        // 2. ODAYA KATIL (GUEST)
+        function joinRoom() {
+            let roomCode = document.getElementById('join-id').value.trim();
+            if(!roomCode) return;
+            document.getElementById('status').innerText = "CONNECTING TO HOST...";
+            
+            peer = new Peer();
+            peer.on('open', () => {
+                isHost = false;
+                myPlayer = p2; // Guest her zaman P2 (Mavi)
+                conn = peer.connect(roomCode);
+                setupNetworkEvents();
+            });
+        }
+
+        // AĞ TRAFİĞİ DİNLEME
+        function setupNetworkEvents() {
+            conn.on('open', () => {
+                document.getElementById('lobby').style.display = 'none';
+                document.getElementById('game-wrapper').style.display = 'flex';
+                
+                if (isHost) {
+                    // Host oyunu başlatır ve Guest'e komut gönderir
+                    setTimeout(() => {
+                        conn.send({ type: 'start' });
+                        startGame();
+                    }, 1500);
+                }
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'start') startGame();
+                if (data.type === 'spawn') createLaser(data.isTop, data.height);
+                if (data.type === 'flip') {
+                    let targetObj = (data.player === 'p1') ? p1 : p2;
+                    executeFlip(targetObj);
+                }
+                if (data.type === 'die') killPlayer((data.player === 'p1') ? p1 : p2);
+            });
+        }
+
+        // OYUN MEKANİKLERİ
+        function executeFlip(playerObj) {
             if (playerObj.isGrounded) {
                 playerObj.el.style.top = "10px";
                 playerObj.isGrounded = false;
@@ -155,43 +190,53 @@
             }
         }
 
-        function spawnLaser() {
-            if (isGameOver) return;
-
+        function createLaser(isTop, height) {
             const laser = document.createElement("div");
             laser.classList.add("laser");
-            const isTop = Math.random() > 0.5;
             laser.classList.add(isTop ? "laser-top" : "laser-bottom");
-            
-            const height = Math.floor(Math.random() * 120) + 70; 
             laser.style.height = height + "px";
             laser.style.left = "800px";
-            
             container.appendChild(laser);
-            
             lasers.push({ element: laser, x: 800, isTop: isTop, height: height });
-
-            gameSpeed += 0.1; // Her lazerde oyun hızlanır
-            speedDisplay.innerText = "SPEED: " + (gameSpeed / 6).toFixed(1) + "x";
-
-            let nextSpawnTime = Math.max(600, 1500 - ((gameSpeed - 6) * 100));
-            spawnInterval = setTimeout(spawnLaser, nextSpawnTime);
         }
 
-        function checkCollision(playerObj, lLeft, lRight, l) {
-            if (playerObj.isDead) return false;
+        // SADECE HOST YENİ LAZER ÜRETİR VE GUEST'E "AYNISINI ÇİZ" DER
+        function hostSpawnLaser() {
+            if (isGameOver) return;
+            const isTop = Math.random() > 0.5;
+            const height = Math.floor(Math.random() * 120) + 70; 
             
-            // Gerçek zamanlı koordinat hesabı
-            let pTop = playerObj.el.offsetTop;
-            let pBottom = pTop + 30;
-            let pLeft = playerObj.left;
-            let pRight = pLeft + 30;
+            createLaser(isTop, height); // Host kendi ekranına çizer
+            conn.send({ type: 'spawn', isTop: isTop, height: height }); // Guest'e emreder
 
-            if (pRight > lLeft && pLeft < lRight) {
-                if (l.isTop && pTop < l.height) return true;
-                if (!l.isTop && pBottom > (350 - l.height)) return true;
-            }
-            return false;
+            gameSpeed += 0.1;
+            let nextSpawnTime = Math.max(600, 1500 - ((gameSpeed - 6) * 100));
+            spawnInterval = setTimeout(hostSpawnLaser, nextSpawnTime);
+        }
+
+        function startGame() {
+            if (isHost) hostSpawnLaser();
+            gameLoop();
+        }
+
+        function killPlayer(playerObj) {
+            playerObj.isDead = true;
+            playerObj.el.style.display = "none";
+            
+            if (p1.isDead && !p2.isDead) endGame("GUEST WINS", "#00e5ff");
+            else if (p2.isDead && !p1.isDead) endGame("HOST WINS", "#fff");
+            else if (p1.isDead && p2.isDead) endGame("MUTUAL DESTRUCTION", "#ff003c");
+        }
+
+        function endGame(text, color) {
+            isGameOver = true;
+            clearTimeout(spawnInterval);
+            cancelAnimationFrame(animationFrameId);
+            let winText = document.getElementById("winner-text");
+            winText.innerText = text;
+            winText.style.color = color;
+            winText.style.textShadow = "0 0 20px " + color;
+            document.getElementById("game-over-screen").style.display = "flex";
         }
 
         function gameLoop() {
@@ -202,25 +247,20 @@
                 l.x -= gameSpeed;
                 l.element.style.left = l.x + "px";
 
-                let lLeft = l.x;
-                let lRight = l.x + 25;
+                let lLeft = l.x; let lRight = l.x + 25;
 
-                // Oyuncu 1 Çarpışma
-                if (checkCollision(p1, lLeft, lRight, l)) {
-                    p1.isDead = true;
-                    p1.el.style.display = "none";
-                }
-                
-                // Oyuncu 2 Çarpışma
-                if (checkCollision(p2, lLeft, lRight, l)) {
-                    p2.isDead = true;
-                    p2.el.style.display = "none";
-                }
+                // Kendi çarpışmamı kontrol et
+                let pTop = myPlayer.el.offsetTop;
+                let pBottom = pTop + 30;
+                let myLeft = (myPlayer === p1) ? 100 : 150;
+                let myRight = myLeft + 30;
 
-                // Kazanma Kontrolü
-                if (p1.isDead && !p2.isDead) triggerGameOver("PLAYER 2 WINS!", "#00e5ff");
-                else if (p2.isDead && !p1.isDead) triggerGameOver("PLAYER 1 WINS!", "#fff");
-                else if (p1.isDead && p2.isDead) triggerGameOver("DRAW - BOTH DESTROYED", "#ff003c"); // İkisi aynı anda çarparsa
+                if (!myPlayer.isDead && myRight > lLeft && myLeft < lRight) {
+                    if ((l.isTop && pTop < l.height) || (!l.isTop && pBottom > (350 - l.height))) {
+                        killPlayer(myPlayer);
+                        conn.send({ type: 'die', player: isHost ? 'p1' : 'p2' });
+                    }
+                }
 
                 if (l.x < -40) {
                     l.element.remove();
@@ -231,39 +271,14 @@
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
-        function triggerGameOver(text, color) {
-            isGameOver = true;
-            clearTimeout(spawnInterval);
-            cancelAnimationFrame(animationFrameId);
-            winnerText.innerText = text;
-            winnerText.style.color = color;
-            winnerText.style.textShadow = "0 0 20px " + color;
-            gameOverScreen.style.display = "flex";
-        }
-
-        function resetGame() {
-            lasers.forEach(l => l.element.remove());
-            lasers = [];
-            gameSpeed = 6;
-            speedDisplay.innerText = "SPEED: 1.0x";
-            gameOverScreen.style.display = "none";
-            isGameOver = false;
-            
-            p1.isDead = false; p1.isGrounded = true; p1.el.style.top = "310px"; p1.el.style.display = "block";
-            p2.isDead = false; p2.isGrounded = true; p2.el.style.top = "310px"; p2.el.style.display = "block";
-
-            spawnLaser();
-            gameLoop();
-        }
-
+        // KONTROLLER (SADECE SPACE KULLANILIR)
         document.addEventListener("keydown", function (event) {
-            if (event.code === "KeyW") flipGravity(p1);
-            if (event.code === "ArrowUp") { event.preventDefault(); flipGravity(p2); }
-            if (event.code === "Space" && isGameOver) resetGame(); // Yeniden başlatma tuşu
+            if (event.code === "Space" && !isGameOver && !myPlayer.isDead) {
+                event.preventDefault();
+                executeFlip(myPlayer); // Kendi ekranımda dön
+                conn.send({ type: 'flip', player: isHost ? 'p1' : 'p2' }); // Karşıya bildir
+            }
         });
-
-        spawnLaser();
-        gameLoop();
     </script>
 </body>
 </html>
