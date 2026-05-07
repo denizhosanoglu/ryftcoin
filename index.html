@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RYFTCOIN | Secure P2P Protocol</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>RYFTCOIN | Security Bypass</title>
     <style>
         body {
             background-color: #050505; color: #ffffff;
@@ -14,48 +13,28 @@
             overflow: hidden; text-transform: uppercase; user-select: none;
         }
 
-        #lobby {
-            border: 1px solid #333; padding: 40px;
-            background: linear-gradient(145deg, #0f0f0f, #050505);
-            box-shadow: 0 0 20px rgba(0,229,255,0.1);
-            text-align: center; z-index: 50; width: 400px;
+        /* Ana Taşıyıcı (Oyun ve Skor Tablosu Yanyana) */
+        #main-layout {
+            display: flex; gap: 20px; align-items: flex-start;
         }
-        #lobby h2 { letter-spacing: 5px; color: #00e5ff; margin-bottom: 30px; }
-        .btn {
-            background: transparent; border: 1px solid #00e5ff; color: #00e5ff;
-            padding: 10px 20px; cursor: pointer; margin: 10px; transition: 0.3s;
-            font-family: inherit; font-size: 1rem; width: 80%;
-        }
-        .btn:hover { background: rgba(0,229,255,0.1); box-shadow: 0 0 10px #00e5ff; }
-        .btn-white { border-color: #fff; color: #fff; }
-        .btn-white:hover { background: rgba(255,255,255,0.1); box-shadow: 0 0 10px #fff; }
-        input {
-            background: #111; border: 1px solid #444; color: #fff;
-            padding: 10px; width: 75%; text-align: center; font-family: inherit;
-            margin-bottom: 10px; letter-spacing: 2px;
-        }
-        #room-code { color: #fff; margin-top: 15px; letter-spacing: 2px; font-weight: bold; }
-        
-        /* Hata mesajları için özel stil */
-        #status { margin-top: 15px; font-size: 0.85rem; letter-spacing: 1px; min-height: 20px; }
-        .error-text { color: #ff003c; text-shadow: 0 0 5px #ff003c; }
-        .success-text { color: #00ff41; }
 
-        #game-wrapper { display: none; flex-direction: column; align-items: center; }
+        /* OYUN ALANI */
+        #game-section { display: flex; flex-direction: column; }
+        
         #game-container {
-            width: 800px; height: 350px; position: relative;
+            width: 750px; height: 350px; position: relative;
             background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
             border-top: 1px solid #333; border-bottom: 1px solid #333;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8) inset; overflow: hidden;
+            cursor: crosshair; /* Mouse ile tıklanabilir hissi verir */
         }
 
-        .player {
-            width: 30px; height: 30px; position: absolute;
-            transition: top 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-            border-radius: 4px; z-index: 10;
+        #player {
+            width: 30px; height: 30px; background-color: #fff;
+            position: absolute; left: 100px; top: 310px;
+            transition: top 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 4px; box-shadow: 0 0 15px rgba(255,255,255,0.8); z-index: 10;
         }
-        #p1 { background-color: #fff; left: 100px; top: 310px; box-shadow: 0 0 15px rgba(255,255,255,0.8); }
-        #p2 { background-color: #00e5ff; left: 150px; top: 310px; box-shadow: 0 0 15px rgba(0,229,255,0.8); }
 
         .laser {
             width: 25px; position: absolute; background-color: #ff003c;
@@ -65,259 +44,200 @@
         .laser-bottom { bottom: 0; }
 
         #ui-layer {
-            display: flex; justify-content: space-between; width: 800px;
-            margin-top: 15px; font-size: 1.2rem; letter-spacing: 2px;
+            display: flex; justify-content: space-between; width: 750px;
+            margin-top: 15px; font-size: 1.2rem; color: #888; letter-spacing: 2px;
         }
+        #score-display { color: #fff; text-shadow: 0 0 5px #fff; }
+
+        /* SKOR TABLOSU (LEADERBOARD) */
+        #leaderboard-section {
+            width: 220px; height: 350px;
+            border: 1px solid #333; background: rgba(10,10,10,0.5);
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 0 15px rgba(0,255,65,0.05);
+        }
+
+        #leaderboard-section h3 {
+            color: #00ff41; letter-spacing: 3px; margin: 20px 0 10px 0;
+            text-shadow: 0 0 10px rgba(0,255,65,0.5); font-size: 1.1rem;
+        }
+
+        #leaderboard-list {
+            list-style: none; padding: 0; margin: 0; width: 85%;
+        }
+
+        #leaderboard-list li {
+            display: flex; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px dashed #333;
+            font-size: 1.1rem; color: #aaa;
+        }
+        
+        .rank-1 { color: #ffd700 !important; text-shadow: 0 0 5px #ffd700; font-weight: bold; }
+        .rank-2 { color: #c0c0c0 !important; }
+        .rank-3 { color: #cd7f32 !important; }
+
+        /* EKRANLAR */
         #game-over-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(10,10,10,0.85); display: none;
             flex-direction: column; align-items: center; justify-content: center; z-index: 20;
+            backdrop-filter: blur(2px);
         }
+
+        #game-over-screen h1 { color: #ff003c; font-size: 3rem; margin: 0 0 10px 0; letter-spacing: 10px; }
+        .blink { animation: blinker 1.5s linear infinite; color: #fff; margin-top: 20px; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
     </style>
 </head>
 <body>
 
-    <div id="lobby">
-        <h2>NETWORK UPLINK</h2>
-        <button class="btn btn-white" id="btn-create" onclick="createRoom()">1. CREATE SECURE ROOM</button>
-        <div id="room-code"></div>
-        <hr style="border-color:#333; margin: 30px 0;">
-        <input type="text" id="join-id" placeholder="PASTE ROOM CODE HERE">
-        <button class="btn" id="btn-join" onclick="joinRoom()">2. JOIN ROOM</button>
-        <div id="status" style="color: #888;">SYSTEM STANDBY...</div>
+    <div style="margin-bottom: 15px; color: #555; letter-spacing: 4px; text-align: center;">
+        [ INITIATE OVERRIDE: SPACEBAR / CLICK / TAP ]
     </div>
+    
+    <div id="main-layout">
+        <div id="game-section">
+            <div id="game-container">
+                <div id="player"></div>
+                
+                <div id="game-over-screen">
+                    <h1>SYSTEM FAILURE</h1>
+                    <div id="final-score" style="font-size: 1.5rem; color: #aaa;">DATA EXTRACTED: 0</div>
+                    <div class="blink">TAP OR PRESS SPACE TO REBOOT</div>
+                </div>
+            </div>
 
-    <div id="game-wrapper">
-        <div style="margin-bottom: 15px; color: #555; letter-spacing: 2px;">
-            <span style="color:#fff;">YOU: [SPACEBAR]</span> // P2P CONNECTION SECURED
-        </div>
-        
-        <div id="game-container">
-            <div id="p1" class="player"></div>
-            <div id="p2" class="player"></div>
-            
-            <div id="game-over-screen">
-                <h1 id="winner-text" style="letter-spacing: 5px;">SYSTEM FAILURE</h1>
+            <div id="ui-layer">
+                <div id="speed-display" style="color: #00ff41;">SPEED: 1.0x</div>
+                <div id="score-display">SCORE: 0</div>
             </div>
         </div>
 
-        <div id="ui-layer">
-            <div style="color: #fff;">PLAYER 1 (HOST)</div>
-            <div style="color: #00e5ff;">PLAYER 2 (GUEST)</div>
+        <div id="leaderboard-section">
+            <h3>TOP HACKERS</h3>
+            <ul id="leaderboard-list">
+                </ul>
         </div>
     </div>
 
     <script>
-        // Güvenlik Duvarı Delici STUN Konfigürasyonu
-        const peerConfig = {
-            config: {
-                'iceServers': [
-                    { url: 'stun:stun.l.google.com:19302' },
-                    { url: 'stun:stun1.l.google.com:19302' }
-                ]
-            }
-        };
-
-        let peer = null;
-        let conn = null;
-        let isHost = false;
-        let myPlayer = null;
-
-        const p1 = { el: document.getElementById("p1"), isGrounded: true, isDead: false };
-        const p2 = { el: document.getElementById("p2"), isGrounded: true, isDead: false };
+        const player = document.getElementById("player");
         const container = document.getElementById("game-container");
-        const statusEl = document.getElementById("status");
-        
+        const scoreDisplay = document.getElementById("score-display");
+        const speedDisplay = document.getElementById("speed-display");
+        const gameOverScreen = document.getElementById("game-over-screen");
+        const finalScoreDisplay = document.getElementById("final-score");
+        const leaderboardList = document.getElementById("leaderboard-list");
+
+        let score = 0;
         let gameSpeed = 6;
         let isGameOver = false;
-        let lasers = [];
+        let isGrounded = true; 
+        let lasers = []; 
         let spawnInterval;
         let animationFrameId;
 
-        // UI Güncelleyici
-        function updateStatus(msg, isError = false, isSuccess = false) {
-            statusEl.innerText = msg;
-            statusEl.className = '';
-            if (isError) statusEl.classList.add('error-text');
-            if (isSuccess) statusEl.classList.add('success-text');
-        }
-
-        function destroyPeer() {
-            if (peer) {
-                peer.destroy();
-                peer = null;
-            }
-        }
-
-        // 1. ODA KUR (HOST)
-        function createRoom() {
-            document.getElementById('btn-create').disabled = true;
-            document.getElementById('btn-join').disabled = true;
-            updateStatus("GENERATING SECURE KEY...");
+        // --- SKOR TABLOSU SİSTEMİ (LOCAL STORAGE) ---
+        function loadLeaderboard() {
+            let records = JSON.parse(localStorage.getItem("ryftcoin_scores")) || [];
+            leaderboardList.innerHTML = "";
             
-            destroyPeer();
-            peer = new Peer(peerConfig); 
-            
-            peer.on('open', (id) => {
-                isHost = true;
-                myPlayer = p1; 
-                document.getElementById('room-code').innerText = id;
-                updateStatus("WAITING FOR GUEST TO JOIN...", false, true);
-                
-                peer.on('connection', (connection) => {
-                    conn = connection;
-                    setupNetworkEvents();
-                });
-            });
-
-            peer.on('error', (err) => {
-                updateStatus("ERROR: " + err.type, true);
-                document.getElementById('btn-create').disabled = false;
-                document.getElementById('btn-join').disabled = false;
-            });
-        }
-
-        // 2. ODAYA KATIL (GUEST)
-        function joinRoom() {
-            let roomCode = document.getElementById('join-id').value.trim();
-            if(!roomCode) {
-                updateStatus("PLEASE ENTER A VALID CODE", true);
+            if (records.length === 0) {
+                leaderboardList.innerHTML = "<li style='text-align:center; display:block; border:none; margin-top:20px;'>NO RECORDS YET</li>";
                 return;
             }
 
-            document.getElementById('btn-create').disabled = true;
-            document.getElementById('btn-join').disabled = true;
-            updateStatus("CONNECTING TO HOST...");
-            
-            destroyPeer();
-            peer = new Peer(peerConfig);
-            
-            peer.on('open', () => {
-                isHost = false;
-                myPlayer = p2; 
-                conn = peer.connect(roomCode, { reliable: true });
-                setupNetworkEvents();
-            });
-
-            peer.on('error', (err) => {
-                updateStatus("CONNECTION FAILED: " + err.type, true);
-                document.getElementById('btn-create').disabled = false;
-                document.getElementById('btn-join').disabled = false;
+            records.slice(0, 5).forEach((record, index) => {
+                let li = document.createElement("li");
+                li.innerHTML = `<span>${record.name}</span> <span>${record.score}</span>`;
+                if(index === 0) li.classList.add("rank-1");
+                if(index === 1) li.classList.add("rank-2");
+                if(index === 2) li.classList.add("rank-3");
+                leaderboardList.appendChild(li);
             });
         }
 
-        // AĞ TRAFİĞİ DİNLEME
-        function setupNetworkEvents() {
-            conn.on('open', () => {
-                updateStatus("CONNECTION ESTABLISHED!", false, true);
+        function checkHighscore(finalScore) {
+            if (finalScore === 0) return;
+            let records = JSON.parse(localStorage.getItem("ryftcoin_scores")) || [];
+            
+            // Eğer ilk 5'e girdiyse veya liste boşsa isim sor
+            if (records.length < 5 || finalScore > records[records.length - 1].score) {
+                // Oyunu durdurduğumuz için ufak bir gecikmeyle alert veriyoruz ki ekran çizilsin
                 setTimeout(() => {
-                    document.getElementById('lobby').style.display = 'none';
-                    document.getElementById('game-wrapper').style.display = 'flex';
-                    
-                    if (isHost) {
-                        setTimeout(() => {
-                            conn.send({ type: 'start' });
-                            startGame();
-                        }, 1000);
+                    let name = prompt("NEW HIGH SCORE! Enter 3 letters:", "RYF");
+                    if (name) {
+                        name = name.substring(0, 3).toUpperCase();
+                        records.push({ name: name, score: finalScore });
+                        records.sort((a, b) => b.score - a.score); // Büyükten küçüğe sırala
+                        records = records.slice(0, 5); // Sadece ilk 5'i tut
+                        localStorage.setItem("ryftcoin_scores", JSON.stringify(records));
+                        loadLeaderboard();
                     }
-                }, 500);
-            });
-
-            conn.on('data', (data) => {
-                if (data.type === 'start') startGame();
-                if (data.type === 'spawn') createLaser(data.isTop, data.height);
-                if (data.type === 'flip') {
-                    let targetObj = (data.player === 'p1') ? p1 : p2;
-                    executeFlip(targetObj);
-                }
-                if (data.type === 'die') killPlayer((data.player === 'p1') ? p1 : p2);
-            });
-
-            conn.on('close', () => {
-                alert("NETWORK DISCONNECTED. REFRESH PAGE.");
-                location.reload();
-            });
-        }
-
-        // OYUN MEKANİKLERİ
-        function executeFlip(playerObj) {
-            if (playerObj.isGrounded) {
-                playerObj.el.style.top = "10px";
-                playerObj.isGrounded = false;
-            } else {
-                playerObj.el.style.top = "310px";
-                playerObj.isGrounded = true;
+                }, 100);
             }
         }
 
-        function createLaser(isTop, height) {
+        // --- OYUN MEKANİKLERİ ---
+        function flipGravity() {
+            if (isGameOver) { resetGame(); return; }
+            if (isGrounded) {
+                player.style.top = "10px";
+                isGrounded = false;
+            } else {
+                player.style.top = "310px";
+                isGrounded = true;
+            }
+        }
+
+        function spawnLaser() {
+            if (isGameOver) return;
             const laser = document.createElement("div");
             laser.classList.add("laser");
-            laser.classList.add(isTop ? "laser-top" : "laser-bottom");
-            laser.style.height = height + "px";
-            laser.style.left = "800px";
-            container.appendChild(laser);
-            lasers.push({ element: laser, x: 800, isTop: isTop, height: height });
-        }
-
-        function hostSpawnLaser() {
-            if (isGameOver) return;
             const isTop = Math.random() > 0.5;
+            laser.classList.add(isTop ? "laser-top" : "laser-bottom");
+            
             const height = Math.floor(Math.random() * 120) + 70; 
+            laser.style.height = height + "px";
+            laser.style.left = "750px"; 
             
-            createLaser(isTop, height); 
-            conn.send({ type: 'spawn', isTop: isTop, height: height }); 
+            container.appendChild(laser);
+            lasers.push({ element: laser, x: 750, isTop: isTop, height: height, passed: false });
 
-            gameSpeed += 0.1;
-            let nextSpawnTime = Math.max(600, 1500 - ((gameSpeed - 6) * 100));
-            spawnInterval = setTimeout(hostSpawnLaser, nextSpawnTime);
-        }
-
-        function startGame() {
-            if (isHost) hostSpawnLaser();
-            gameLoop();
-        }
-
-        function killPlayer(playerObj) {
-            playerObj.isDead = true;
-            playerObj.el.style.display = "none";
-            
-            if (p1.isDead && !p2.isDead) endGame("GUEST WINS", "#00e5ff");
-            else if (p2.isDead && !p1.isDead) endGame("HOST WINS", "#fff");
-            else if (p1.isDead && p2.isDead) endGame("MUTUAL DESTRUCTION", "#ff003c");
-        }
-
-        function endGame(text, color) {
-            isGameOver = true;
-            clearTimeout(spawnInterval);
-            cancelAnimationFrame(animationFrameId);
-            let winText = document.getElementById("winner-text");
-            winText.innerText = text;
-            winText.style.color = color;
-            winText.style.textShadow = "0 0 20px " + color;
-            document.getElementById("game-over-screen").style.display = "flex";
+            let nextSpawnTime = Math.max(650, 1500 - (score * 25));
+            spawnInterval = setTimeout(spawnLaser, nextSpawnTime);
         }
 
         function gameLoop() {
             if (isGameOver) return;
 
+            let pTop = player.offsetTop;
+            let pBottom = pTop + 30;
+            let pLeft = 100;
+            let pRight = 130;
+
             for (let i = 0; i < lasers.length; i++) {
                 let l = lasers[i];
-                l.x -= gameSpeed;
+                l.x -= gameSpeed; 
                 l.element.style.left = l.x + "px";
 
-                let lLeft = l.x; let lRight = l.x + 25;
+                let lLeft = l.x;
+                let lRight = l.x + 25; 
 
-                let pTop = myPlayer.el.offsetTop;
-                let pBottom = pTop + 30;
-                let myLeft = (myPlayer === p1) ? 100 : 150;
-                let myRight = myLeft + 30;
+                // Çarpışma Kontrolü
+                if (pRight > lLeft && pLeft < lRight) {
+                    if (l.isTop && pTop < l.height) triggerGameOver();
+                    else if (!l.isTop && pBottom > (350 - l.height)) triggerGameOver();
+                }
 
-                if (!myPlayer.isDead && myRight > lLeft && myLeft < lRight) {
-                    if ((l.isTop && pTop < l.height) || (!l.isTop && pBottom > (350 - l.height))) {
-                        killPlayer(myPlayer);
-                        conn.send({ type: 'die', player: isHost ? 'p1' : 'p2' });
-                    }
+                // Skoru ve Hızı Artır
+                if (!l.passed && l.x < pLeft) {
+                    l.passed = true;
+                    score++;
+                    scoreDisplay.innerText = "SCORE: " + score;
+                    gameSpeed += 0.15; 
+                    speedDisplay.innerText = "SPEED: " + (gameSpeed / 6).toFixed(1) + "x";
                 }
 
                 if (l.x < -40) {
@@ -329,13 +249,56 @@
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
+        function triggerGameOver() {
+            isGameOver = true;
+            clearTimeout(spawnInterval);
+            cancelAnimationFrame(animationFrameId);
+            finalScoreDisplay.innerText = "DATA EXTRACTED: " + score + " BLOCKS";
+            gameOverScreen.style.display = "flex";
+            checkHighscore(score);
+        }
+
+        function resetGame() {
+            lasers.forEach(l => l.element.remove());
+            lasers = [];
+            score = 0;
+            gameSpeed = 6;
+            scoreDisplay.innerText = "SCORE: 0";
+            speedDisplay.innerText = "SPEED: 1.0x";
+            gameOverScreen.style.display = "none";
+            isGameOver = false;
+            
+            player.style.top = "310px";
+            isGrounded = true;
+
+            spawnLaser();
+            gameLoop();
+        }
+
+        // --- KONTROLLER (BİLGİSAYAR VE MOBİL) ---
+        // Space Tuşu
         document.addEventListener("keydown", function (event) {
-            if (event.code === "Space" && !isGameOver && !myPlayer.isDead) {
-                event.preventDefault();
-                executeFlip(myPlayer);
-                conn.send({ type: 'flip', player: isHost ? 'p1' : 'p2' });
+            if (event.code === "Space") {
+                event.preventDefault(); 
+                flipGravity();
             }
         });
+
+        // Ekrana Dokunma veya Tıklama (Pointerdown Mouse ve Touch'ı aynı anda kapsar)
+        document.addEventListener("pointerdown", function(event) {
+            // Sadece tıklanan yer buton falan değilse çalışsın (ilgilendiğimiz kısım oyun)
+            if(event.target.tagName !== "BUTTON" && event.target.tagName !== "INPUT") {
+               // Eğer alert/prompt açıksa oyunun hemen resetlenmesini engellemek için ufak kontrol
+               if(document.activeElement.tagName !== "INPUT") {
+                    flipGravity();
+               }
+            }
+        });
+
+        // Başlangıç
+        loadLeaderboard();
+        spawnLaser();
+        gameLoop();
     </script>
 </body>
 </html>
