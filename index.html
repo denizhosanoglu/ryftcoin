@@ -13,10 +13,7 @@
             overflow: hidden; text-transform: uppercase; user-select: none;
         }
 
-        /* Ana Taşıyıcı (Oyun ve Skor Tablosu Yanyana) */
-        #main-layout {
-            display: flex; gap: 20px; align-items: flex-start;
-        }
+        #main-layout { display: flex; gap: 20px; align-items: flex-start; }
 
         /* OYUN ALANI */
         #game-section { display: flex; flex-direction: column; }
@@ -26,7 +23,7 @@
             background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
             border-top: 1px solid #333; border-bottom: 1px solid #333;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8) inset; overflow: hidden;
-            cursor: crosshair; /* Mouse ile tıklanabilir hissi verir */
+            cursor: crosshair;
         }
 
         #player {
@@ -62,29 +59,35 @@
             text-shadow: 0 0 10px rgba(0,255,65,0.5); font-size: 1.1rem;
         }
 
-        #leaderboard-list {
-            list-style: none; padding: 0; margin: 0; width: 85%;
-        }
-
+        #leaderboard-list { list-style: none; padding: 0; margin: 0; width: 85%; }
         #leaderboard-list li {
             display: flex; justify-content: space-between;
             padding: 10px 0; border-bottom: 1px dashed #333;
             font-size: 1.1rem; color: #aaa;
         }
-        
         .rank-1 { color: #ffd700 !important; text-shadow: 0 0 5px #ffd700; font-weight: bold; }
         .rank-2 { color: #c0c0c0 !important; }
         .rank-3 { color: #cd7f32 !important; }
 
-        /* EKRANLAR */
-        #game-over-screen {
+        /* BAŞLANGIÇ VE BİTİŞ EKRANLARI */
+        .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10,10,10,0.85); display: none;
-            flex-direction: column; align-items: center; justify-content: center; z-index: 20;
-            backdrop-filter: blur(2px);
+            background: rgba(10,10,10,0.85); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 20; backdrop-filter: blur(2px);
         }
 
-        #game-over-screen h1 { color: #ff003c; font-size: 3rem; margin: 0 0 10px 0; letter-spacing: 10px; }
+        #game-over-screen { display: none; } /* Başlangıçta gizli */
+        
+        /* BAŞLANGIÇ BUTONU */
+        .cyber-btn {
+            background: transparent; border: 1px solid #00ff41; color: #00ff41;
+            padding: 12px 25px; font-family: inherit; font-size: 1.2rem; letter-spacing: 3px;
+            cursor: pointer; margin-top: 20px; transition: 0.3s;
+        }
+        .cyber-btn:hover { background: rgba(0, 255, 65, 0.1); box-shadow: 0 0 15px #00ff41; }
+
+        #game-over-screen h1 { color: #ff003c; font-size: 3rem; margin: 0 0 10px 0; letter-spacing: 10px; text-shadow: 0 0 15px #ff003c; }
         .blink { animation: blinker 1.5s linear infinite; color: #fff; margin-top: 20px; }
         @keyframes blinker { 50% { opacity: 0; } }
 
@@ -101,7 +104,13 @@
             <div id="game-container">
                 <div id="player"></div>
                 
-                <div id="game-over-screen">
+                <div id="start-screen" class="overlay-screen">
+                    <h2 style="color: #00ff41; letter-spacing: 8px; margin: 0;">RYFTCOIN OS</h2>
+                    <div style="color: #555; margin-bottom: 20px;">v5.1 SECURE PROTOCOL</div>
+                    <button id="start-btn" class="cyber-btn">INITIATE CONNECTION</button>
+                </div>
+
+                <div id="game-over-screen" class="overlay-screen">
                     <h1>SYSTEM FAILURE</h1>
                     <div id="final-score" style="font-size: 1.5rem; color: #aaa;">DATA EXTRACTED: 0</div>
                     <div class="blink">TAP OR PRESS SPACE TO REBOOT</div>
@@ -116,8 +125,7 @@
 
         <div id="leaderboard-section">
             <h3>TOP HACKERS</h3>
-            <ul id="leaderboard-list">
-                </ul>
+            <ul id="leaderboard-list"></ul>
         </div>
     </div>
 
@@ -127,18 +135,20 @@
         const scoreDisplay = document.getElementById("score-display");
         const speedDisplay = document.getElementById("speed-display");
         const gameOverScreen = document.getElementById("game-over-screen");
+        const startScreen = document.getElementById("start-screen");
         const finalScoreDisplay = document.getElementById("final-score");
         const leaderboardList = document.getElementById("leaderboard-list");
 
         let score = 0;
         let gameSpeed = 6;
         let isGameOver = false;
+        let isGameStarted = false; // YENİ: Oyun başladı mı kontrolü
         let isGrounded = true; 
         let lasers = []; 
         let spawnInterval;
         let animationFrameId;
 
-        // --- SKOR TABLOSU SİSTEMİ (LOCAL STORAGE) ---
+        // --- SKOR TABLOSU SİSTEMİ (Şimdilik Local) ---
         function loadLeaderboard() {
             let records = JSON.parse(localStorage.getItem("ryftcoin_scores")) || [];
             leaderboardList.innerHTML = "";
@@ -162,16 +172,14 @@
             if (finalScore === 0) return;
             let records = JSON.parse(localStorage.getItem("ryftcoin_scores")) || [];
             
-            // Eğer ilk 5'e girdiyse veya liste boşsa isim sor
             if (records.length < 5 || finalScore > records[records.length - 1].score) {
-                // Oyunu durdurduğumuz için ufak bir gecikmeyle alert veriyoruz ki ekran çizilsin
                 setTimeout(() => {
-                    let name = prompt("NEW HIGH SCORE! Enter your username (max 10 letter):", "RYF");
+                    let name = prompt("NEW HIGH SCORE! Enter 3 letters:", "RYF");
                     if (name) {
-                        name = name.substring(0, 10).toUpperCase();
+                        name = name.substring(0, 3).toUpperCase();
                         records.push({ name: name, score: finalScore });
-                        records.sort((a, b) => b.score - a.score); // Büyükten küçüğe sırala
-                        records = records.slice(0, 5); // Sadece ilk 5'i tut
+                        records.sort((a, b) => b.score - a.score); 
+                        records = records.slice(0, 5); 
                         localStorage.setItem("ryftcoin_scores", JSON.stringify(records));
                         loadLeaderboard();
                     }
@@ -181,7 +189,13 @@
 
         // --- OYUN MEKANİKLERİ ---
         function flipGravity() {
-            if (isGameOver) { resetGame(); return; }
+            if (!isGameStarted) return; // Oyun başlamadıysa hiçbir şey yapma
+            
+            if (isGameOver) { 
+                resetGame(); 
+                return; 
+            }
+            
             if (isGrounded) {
                 player.style.top = "10px";
                 isGrounded = false;
@@ -192,7 +206,7 @@
         }
 
         function spawnLaser() {
-            if (isGameOver) return;
+            if (isGameOver || !isGameStarted) return;
             const laser = document.createElement("div");
             laser.classList.add("laser");
             const isTop = Math.random() > 0.5;
@@ -210,7 +224,7 @@
         }
 
         function gameLoop() {
-            if (isGameOver) return;
+            if (isGameOver || !isGameStarted) return;
 
             let pTop = player.offsetTop;
             let pBottom = pTop + 30;
@@ -225,13 +239,11 @@
                 let lLeft = l.x;
                 let lRight = l.x + 25; 
 
-                // Çarpışma Kontrolü
                 if (pRight > lLeft && pLeft < lRight) {
                     if (l.isTop && pTop < l.height) triggerGameOver();
                     else if (!l.isTop && pBottom > (350 - l.height)) triggerGameOver();
                 }
 
-                // Skoru ve Hızı Artır
                 if (!l.passed && l.x < pLeft) {
                     l.passed = true;
                     score++;
@@ -266,8 +278,9 @@
             scoreDisplay.innerText = "SCORE: 0";
             speedDisplay.innerText = "SPEED: 1.0x";
             gameOverScreen.style.display = "none";
-            isGameOver = false;
+            startScreen.style.display = "none"; // Start ekranını gizle
             
+            isGameOver = false;
             player.style.top = "310px";
             isGrounded = true;
 
@@ -275,8 +288,14 @@
             gameLoop();
         }
 
-        // --- KONTROLLER (BİLGİSAYAR VE MOBİL) ---
-        // Space Tuşu
+        // --- EVENT LISTENERS (KONTROLLER) ---
+        
+        // BAŞLA BUTONU TIKLAMASI
+        document.getElementById("start-btn").addEventListener("click", function() {
+            isGameStarted = true;
+            resetGame();
+        });
+
         document.addEventListener("keydown", function (event) {
             if (event.code === "Space") {
                 event.preventDefault(); 
@@ -284,21 +303,16 @@
             }
         });
 
-        // Ekrana Dokunma veya Tıklama (Pointerdown Mouse ve Touch'ı aynı anda kapsar)
         document.addEventListener("pointerdown", function(event) {
-            // Sadece tıklanan yer buton falan değilse çalışsın (ilgilendiğimiz kısım oyun)
             if(event.target.tagName !== "BUTTON" && event.target.tagName !== "INPUT") {
-               // Eğer alert/prompt açıksa oyunun hemen resetlenmesini engellemek için ufak kontrol
                if(document.activeElement.tagName !== "INPUT") {
                     flipGravity();
                }
             }
         });
 
-        // Başlangıç
+        // Sayfa yüklendiğinde sadece skorları çek, oyunu BAŞLATMA
         loadLeaderboard();
-        spawnLaser();
-        gameLoop();
     </script>
 </body>
 </html>
