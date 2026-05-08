@@ -3,83 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ryftcoin Ekosistemi</title>
+    <title>Ryft Clicker</title>
     <style>
-        body {
-            background-color: #0d1117; /* Koyu tema */
-            color: #c9d1d9;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            padding-top: 15vh;
+        body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; }
+        .coin { 
+            width: 200px; cursor: pointer; transition: transform 0.1s; 
+            user-select: none; margin-top: 50px;
         }
-        h1 {
-            color: #58a6ff;
-            font-size: 3rem;
-        }
-        .container {
-            border: 1px solid #30363d;
-            border-radius: 10px;
-            padding: 40px;
-            display: inline-block;
-            background-color: #161b22;
-        }
-        button {
-            background-color: #238636;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: 0.3s;
-        }
-        button:hover {
-            background-color: #2ea043;
-        }
-        #mesaj-kutusu {
-            margin-top: 20px;
-            font-weight: bold;
-            color: #ff7b72;
-        }
+        .coin:active { transform: scale(0.9); }
+        .stats { font-size: 1.5rem; margin-top: 20px; color: #58a6ff; }
+        .global { color: #7ee787; font-size: 1.2rem; }
     </style>
 </head>
 <body>
+    <h1>Ryft Clicker</h1>
+    <p>Coin'e tıkla ve backend'e gönder!</p>
 
-    <div class="container">
-        <h1>Ryftcoin'e Hoş Geldin!</h1>
-        <p>Bu ekran senin Frontend (Ön Yüz) kısmın. Şu an ryftcoin.com üzerinden yayınlanıyor.</p>
-        
-        <button onclick="testEt()">Sistemi Test Et</button>
-        
-        <p id="mesaj-kutusu"></p>
-    </div>
+    <div id="coin" class="coin" style="font-size: 100px;">🪙</div>
 
-<script>
-    async function testEt() {
-        const mesajKutusu = document.getElementById('mesaj-kutusu');
-        mesajKutusu.innerText = "Backend'e bağlanılıyor...";
-        mesajKutusu.style.color = "#58a6ff"; // Mavi yap
+    <div class="stats">Senin Kazancın: <span id="my-score">0</span></div>
+    <div class="global">Dünya Geneli Toplam: <span id="global-score">0</span></div>
 
-        try {
-            // DİKKAT: Burası senin Railway adresinle konuşacak
-            const response = await fetch('https://api.ryftcoin.com/');
-            
-            if (!response.ok) throw new Error("Backend cevap vermedi");
-            
-            const data = await response.text();
-            
-            // Başarılı olursa yeşil yap ve backend'den gelen mesajı yaz
-            mesajKutusu.style.color = "#7ee787"; 
-            mesajKutusu.innerText = "Backend'den Cevap Geldi: " + data;
-        } catch (error) {
-            // Hata olursa kırmızı yap
-            mesajKutusu.style.color = "#ff7b72"; 
-            mesajKutusu.innerText = "Hata: Backend'e ulaşılamadı. (DNS henüz oturmamış olabilir)";
-            console.error(error);
-        }
-    }
-</script>
+    <script>
+        let score = 0;
+        const coin = document.getElementById('coin');
+        const myScoreDisplay = document.getElementById('my-score');
+        const globalScoreDisplay = document.getElementById('global-score');
 
+        coin.onclick = async () => {
+            score++;
+            myScoreDisplay.innerText = score;
+
+            try {
+                // Backend'e POST isteği gönderiyoruz
+                const response = await fetch('https://api.ryftcoin.com/click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                globalScoreDisplay.innerText = data.globalTotal;
+            } catch (err) {
+                console.error("Backend bağlantı hatası");
+            }
+        };
+    </script>
 </body>
 </html>
