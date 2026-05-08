@@ -1,51 +1,600 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ryft Clicker</title>
-    <style>
-        body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; }
-        .coin { 
-            width: 200px; cursor: pointer; transition: transform 0.1s; 
-            user-select: none; margin-top: 50px;
-        }
-        .coin:active { transform: scale(0.9); }
-        .stats { font-size: 1.5rem; margin-top: 20px; color: #58a6ff; }
-        .global { color: #7ee787; font-size: 1.2rem; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RyftCoin — Clicker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Variables ─────────────────────────────────────────────────── */
+    :root {
+      --bg:        #060810;
+      --surface:   #0d1117;
+      --border:    #1a2535;
+      --gold:      #f5c842;
+      --gold-dim:  #b8922f;
+      --gold-glow: rgba(245,200,66,.35);
+      --cyan:      #00e5ff;
+      --cyan-dim:  #007a8c;
+      --red:       #ff3c5f;
+      --text:      #cdd6f4;
+      --muted:     #5a6480;
+      --font-head: 'Orbitron', monospace;
+      --font-mono: 'Share Tech Mono', monospace;
+      --r:         12px;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid noise overlay ────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(245,200,66,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,200,66,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Login screen ──────────────────────────────────────────────── */
+    #login-screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--bg);
+      z-index: 100;
+      gap: 24px;
+    }
+    #login-screen h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 30px var(--gold-glow), 0 0 60px var(--gold-glow);
+      letter-spacing: .15em;
+    }
+    #login-screen p {
+      color: var(--muted);
+      font-size: .9rem;
+      letter-spacing: .08em;
+    }
+    #login-screen input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--gold);
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      padding: 14px 24px;
+      text-align: center;
+      outline: none;
+      width: 280px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #login-screen input:focus {
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 0 3px var(--gold-glow);
+    }
+    #login-screen button {
+      background: var(--gold);
+      border: none;
+      border-radius: var(--r);
+      color: #060810;
+      cursor: pointer;
+      font-family: var(--font-head);
+      font-size: .9rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      padding: 14px 40px;
+      transition: transform .15s, box-shadow .15s;
+    }
+    #login-screen button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--gold-glow);
+    }
+
+    /* ── Main layout ───────────────────────────────────────────────── */
+    #app {
+      display: none;
+      width: 100%;
+      max-width: 1100px;
+      padding: 24px 16px 80px;
+      position: relative; z-index: 1;
+      gap: 24px;
+      flex-direction: column;
+      align-items: center;
+    }
+    #app.visible { display: flex; }
+
+    /* ── Header ────────────────────────────────────────────────────── */
+    header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+    }
+    header h1 {
+      font-family: var(--font-head);
+      font-size: 1.3rem;
+      color: var(--gold);
+      text-shadow: 0 0 12px var(--gold-glow);
+      letter-spacing: .15em;
+    }
+    #username-display {
+      color: var(--cyan);
+      font-size: .85rem;
+      letter-spacing: .06em;
+    }
+
+    /* ── 3-column grid ─────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: 260px 1fr 260px;
+      gap: 20px;
+      width: 100%;
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Panel ─────────────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+    }
+    .panel-title {
+      font-family: var(--font-head);
+      font-size: .7rem;
+      letter-spacing: .18em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    /* ── Stats panel ───────────────────────────────────────────────── */
+    .stat { margin-bottom: 14px; }
+    .stat-label { font-size: .75rem; color: var(--muted); letter-spacing: .06em; margin-bottom: 4px; }
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow: 0 0 10px var(--gold-glow);
+    }
+    .stat-value.small { font-size: 1.1rem; color: var(--cyan); text-shadow: none; }
+
+    /* ── Coin button ───────────────────────────────────────────────── */
+    .coin-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+    }
+    #coin-btn {
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      border: 3px solid var(--gold-dim);
+      background: radial-gradient(circle at 35% 35%, #f5d060, #c8960a 60%, #7a5800);
+      box-shadow: 0 0 40px var(--gold-glow), inset 0 0 30px rgba(0,0,0,.4);
+      cursor: pointer;
+      position: relative;
+      transition: transform .08s, box-shadow .08s;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none;
+    }
+    #coin-btn:hover {
+      box-shadow: 0 0 60px var(--gold-glow), inset 0 0 30px rgba(0,0,0,.4);
+    }
+    #coin-btn:active {
+      transform: scale(.93);
+      box-shadow: 0 0 20px var(--gold-glow), inset 0 0 30px rgba(0,0,0,.4);
+    }
+    #coin-btn svg { width: 90px; height: 90px; opacity: .9; }
+
+    /* coin ripple */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      animation: ripple-out .6s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes ripple-out {
+      0%   { width: 20px; height: 20px; opacity: .8; transform: translate(-50%,-50%) scale(1); }
+      100% { width: 200px; height: 200px; opacity: 0; transform: translate(-50%,-50%) scale(1); }
+    }
+
+    /* floating +N label */
+    .float-label {
+      position: fixed;
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow: 0 0 10px var(--gold-glow);
+      pointer-events: none;
+      animation: float-up .9s ease-out forwards;
+      z-index: 999;
+    }
+    @keyframes float-up {
+      0%   { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-80px); }
+    }
+
+    #coin-info {
+      font-size: .82rem;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: .06em;
+      line-height: 1.7;
+    }
+
+    /* ── Upgrades panel ────────────────────────────────────────────── */
+    .upg-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      transition: border-color .2s;
+    }
+    .upg-item:last-child { margin-bottom: 0; }
+    .upg-item.can-afford { border-color: var(--gold-dim); }
+    .upg-item.cant-afford { opacity: .5; }
+    .upg-name { font-size: .82rem; color: var(--text); }
+    .upg-cost { font-size: .75rem; color: var(--gold); }
+    .upg-btn {
+      background: var(--gold);
+      border: none;
+      border-radius: 6px;
+      color: #060810;
+      cursor: pointer;
+      font-family: var(--font-head);
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      padding: 7px 14px;
+      transition: transform .1s, opacity .1s;
+      align-self: flex-end;
+    }
+    .upg-btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .upg-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Leaderboard ───────────────────────────────────────────────── */
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .82rem;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank {
+      font-family: var(--font-head);
+      font-size: .75rem;
+      color: var(--muted);
+      width: 22px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .lb-rank.top { color: var(--gold); }
+    .lb-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-score { color: var(--gold); font-family: var(--font-head); font-size: .8rem; }
+    #lb-refresh {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: .7rem;
+      font-family: var(--font-mono);
+      letter-spacing: .06em;
+      padding: 4px 10px;
+      margin-bottom: 14px;
+      transition: border-color .2s, color .2s;
+    }
+    #lb-refresh:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+
+    /* ── Toast ─────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 10px 24px;
+      font-size: .82rem;
+      color: var(--text);
+      opacity: 0;
+      transition: opacity .3s;
+      z-index: 500;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+    #toast.error { border-color: var(--red); color: var(--red); }
+    #toast.success { border-color: var(--gold-dim); color: var(--gold); }
+  </style>
 </head>
 <body>
-    <h1>Ryft Clicker</h1>
-    <p>Coin'e tıkla!</p>
 
-    <div id="coin" class="coin" style="font-size: 100px;">🪙</div>
+<!-- ── LOGIN ─────────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <h1>RYFTCOIN</h1>
+  <p>KULLANICI ADINLA GİR</p>
+  <input id="login-input" type="text" maxlength="32" placeholder="kullanıcı adı..." autocomplete="off" />
+  <button id="login-btn">BAŞLA</button>
+</div>
 
-    <div class="stats">Senin Kazancın: <span id="my-score">0</span></div>
-    <div class="global">Dünya Geneli Toplam: <span id="global-score">0</span></div>
+<!-- ── APP ───────────────────────────────────────────────────────────── -->
+<div id="app">
+  <header>
+    <h1>RYFTCOIN</h1>
+    <span id="username-display"></span>
+  </header>
 
-    <script>
-        let score = 0;
-        const coin = document.getElementById('coin');
-        const myScoreDisplay = document.getElementById('my-score');
-        const globalScoreDisplay = document.getElementById('global-score');
+  <div class="grid">
 
-        coin.onclick = async () => {
-            score++;
-            myScoreDisplay.innerText = score;
+    <!-- Sol: İstatistikler -->
+    <div class="panel">
+      <div class="panel-title">İstatistikler</div>
+      <div class="stat">
+        <div class="stat-label">Mevcut Coin</div>
+        <div class="stat-value" id="stat-coins">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Toplam Kazanılan</div>
+        <div class="stat-value" id="stat-total">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Tıklama Gücü</div>
+        <div class="stat-value small" id="stat-click">1 / tık</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Otomatik Kazanç</div>
+        <div class="stat-value small" id="stat-auto">0 / sn</div>
+      </div>
+    </div>
 
-            try {
-                // Backend'e POST isteği gönderiyoruz
-                const response = await fetch('https://api.ryftcoin.com/click', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-                globalScoreDisplay.innerText = data.globalTotal;
-            } catch (err) {
-                console.error("Backend bağlantı hatası");
-            }
-        };
-    </script>
+    <!-- Orta: Coin butonu -->
+    <div class="panel coin-wrap">
+      <button id="coin-btn" title="Tıkla!">
+        <!-- Coin SVG ikonu -->
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="2"/>
+          <text x="50" y="64" text-anchor="middle" font-family="Georgia,serif" font-size="52" font-weight="bold" fill="rgba(255,255,255,.85)">₿</text>
+        </svg>
+      </button>
+      <div id="coin-info">
+        Tıkla, coin kazan!<br/>
+        Upgrade'lerle güçlen.
+      </div>
+    </div>
+
+    <!-- Sağ: Liderlik tablosu -->
+    <div class="panel">
+      <div class="panel-title">Liderlik Tablosu</div>
+      <button id="lb-refresh">↻ Yenile</button>
+      <div id="leaderboard">—</div>
+    </div>
+
+  </div>
+
+  <!-- Upgrade paneli (tam genişlik) -->
+  <div class="panel" style="width:100%">
+    <div class="panel-title">Upgrade'ler</div>
+    <div id="upgrades-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'https://api.ryftcoin.com';
+
+  // ── State ──────────────────────────────────────────────────────────
+  let username = '';
+  let player   = null;
+  let upgrades = {};
+
+  // ── Toast ──────────────────────────────────────────────────────────
+  let toastTimer;
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.className = '', 2400);
+  }
+
+  // ── Login ──────────────────────────────────────────────────────────
+  document.getElementById('login-btn').addEventListener('click', startGame);
+  document.getElementById('login-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startGame();
+  });
+
+  async function startGame() {
+    const raw = document.getElementById('login-input').value.trim().toLowerCase();
+    if (!raw || raw.length < 2) { toast('En az 2 karakter gir.', 'error'); return; }
+    username = raw;
+    try {
+      [player, upgrades] = await Promise.all([
+        fetch(`${API}/player/${username}`).then(r => r.json()),
+        fetch(`${API}/upgrades`).then(r => r.json())
+      ]);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      document.getElementById('username-display').textContent = `▶ ${username}`;
+      renderUpgrades();
+      updateStats();
+      loadLeaderboard();
+      startAutoTick();
+    } catch(e) {
+      toast('Sunucuya bağlanılamadı.', 'error');
+    }
+  }
+
+  // ── Update UI ──────────────────────────────────────────────────────
+  function fmt(n) {
+    n = Number(n);
+    if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+    return n.toString();
+  }
+
+  function updateStats() {
+    document.getElementById('stat-coins').textContent  = fmt(player.coins);
+    document.getElementById('stat-total').textContent  = fmt(player.total_coins);
+    document.getElementById('stat-click').textContent  = `${player.click_power} / tık`;
+    document.getElementById('stat-auto').textContent   = `${player.auto_power} / sn`;
+    refreshUpgradeStates();
+  }
+
+  // ── Coin click ─────────────────────────────────────────────────────
+  const coinBtn = document.getElementById('coin-btn');
+  coinBtn.addEventListener('click', async (e) => {
+    spawnRipple(e);
+    spawnFloat(e);
+    try {
+      player = await fetch(`${API}/click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      }).then(r => r.json());
+      updateStats();
+    } catch { /* sessiz hata */ }
+  });
+
+  function spawnRipple(e) {
+    const r = document.createElement('div');
+    r.className = 'ripple';
+    const rect = coinBtn.getBoundingClientRect();
+    r.style.left = (e.clientX - rect.left) + 'px';
+    r.style.top  = (e.clientY - rect.top)  + 'px';
+    coinBtn.appendChild(r);
+    r.addEventListener('animationend', () => r.remove());
+  }
+
+  function spawnFloat(e) {
+    const el = document.createElement('div');
+    el.className = 'float-label';
+    el.textContent = `+${player ? player.click_power : 1}`;
+    el.style.left = e.clientX + 'px';
+    el.style.top  = e.clientY + 'px';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  // ── Auto tick ─────────────────────────────────────────────────────
+  function startAutoTick() {
+    setInterval(async () => {
+      if (!player || player.auto_power === 0) return;
+      try {
+        player = await fetch(`${API}/auto`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        }).then(r => r.json());
+        updateStats();
+      } catch { /* sessiz */ }
+    }, 1000);
+  }
+
+  // ── Upgrades ───────────────────────────────────────────────────────
+  function renderUpgrades() {
+    const grid = document.getElementById('upgrades-grid');
+    grid.innerHTML = '';
+    for (const [id, upg] of Object.entries(upgrades)) {
+      const div = document.createElement('div');
+      div.className = 'upg-item';
+      div.dataset.id = id;
+      div.innerHTML = `
+        <div class="upg-name">${upg.label}</div>
+        <div class="upg-cost">💰 ${upg.cost} coin</div>
+        <button class="upg-btn" data-id="${id}">SATIN AL</button>`;
+      div.querySelector('.upg-btn').addEventListener('click', () => buyUpgrade(id));
+      grid.appendChild(div);
+    }
+    refreshUpgradeStates();
+  }
+
+  function refreshUpgradeStates() {
+    document.querySelectorAll('.upg-item').forEach(el => {
+      const id  = el.dataset.id;
+      const upg = upgrades[id];
+      const can = player && Number(player.coins) >= upg.cost;
+      el.classList.toggle('can-afford', can);
+      el.classList.toggle('cant-afford', !can);
+      el.querySelector('.upg-btn').disabled = !can;
+    });
+  }
+
+  async function buyUpgrade(id) {
+    try {
+      const res = await fetch(`${API}/upgrade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, upgrade_id: id })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast(err.error || 'Hata!', 'error');
+        return;
+      }
+      player = await res.json();
+      updateStats();
+      toast(`${upgrades[id].label} satın alındı!`, 'success');
+    } catch {
+      toast('Sunucu hatası.', 'error');
+    }
+  }
+
+  // ── Leaderboard ────────────────────────────────────────────────────
+  async function loadLeaderboard() {
+    try {
+      const rows = await fetch(`${API}/leaderboard`).then(r => r.json());
+      const el = document.getElementById('leaderboard');
+      if (!rows.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.8rem">Henüz kimse yok.</div>'; return; }
+      el.innerHTML = rows.map((r, i) => `
+        <div class="lb-row">
+          <div class="lb-rank ${i < 3 ? 'top' : ''}">#${i+1}</div>
+          <div class="lb-name">${r.username}</div>
+          <div class="lb-score">${fmt(r.total_coins)}</div>
+        </div>`).join('');
+    } catch {
+      document.getElementById('leaderboard').innerHTML = '<div style="color:var(--muted)">Yüklenemedi.</div>';
+    }
+  }
+
+  document.getElementById('lb-refresh').addEventListener('click', loadLeaderboard);
+
+  // otomatik liderlik yenileme (her 30 sn)
+  setInterval(loadLeaderboard, 30000);
+</script>
 </body>
 </html>
