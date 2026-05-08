@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ryftcoin Ekosistemi</title>
+    <style>
+        body {
+            background-color: #0d1117; /* Koyu tema */
+            color: #c9d1d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding-top: 15vh;
+        }
+        h1 {
+            color: #58a6ff;
+            font-size: 3rem;
+        }
+        .container {
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 40px;
+            display: inline-block;
+            background-color: #161b22;
+        }
+        button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        #mesaj-kutusu {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #ff7b72;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Ryftcoin'e Hoş Geldin!</h1>
+        <p>Bu ekran senin Frontend (Ön Yüz) kısmın. Şu an ryftcoin.com üzerinden yayınlanıyor.</p>
+        
+        <button onclick="testEt()">Sistemi Test Et</button>
+        
+        <p id="mesaj-kutusu"></p>
+    </div>
+
+    <script>
+        function testEt() {
+            // Şimdilik sadece frontend'in çalıştığını test ediyoruz.
+            // Bir sonraki adımda buraya api.ryftcoin.com'dan veri çekme kodunu yazacağız!
+            document.getElementById('mesaj-kutusu').innerText = "Buton çalışıyor! Sıradaki görev: Backend'e bağlanmak.";
+        }
+    </script>
+
+</body>
+</html>
