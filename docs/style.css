@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --bg: #060810;
+  --surface: #0d1117;
+  --border: #1a2535;
+  --gold: #f5c842;
+  --gold-dim: #b8922f;
+  --cyan: #00e5ff;
+  --green: #00ff88;
+  --red: #ff3c5f;
+  --text: #c9d1d9;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  padding: 2rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(245, 200, 66, 0.5);
+  letter-spacing: 0.2em;
+}
+
+.tagline {
+  color: var(--cyan);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  opacity: 0.7;
+}
+
+main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.card p {
+  font-size: 0.8rem;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+button {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: auto;
+}
+
+button:hover {
+  background: var(--gold);
+  color: var(--bg);
+}
+
+.result {
+  font-size: 0.8rem;
+  min-height: 1.2em;
+  opacity: 1 !important;
+}
+
+.result.ok { color: var(--green); }
+.result.err { color: var(--red); }
+.result.loading { color: var(--cyan); }
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  font-size: 0.75rem;
+  opacity: 0.4;
+}

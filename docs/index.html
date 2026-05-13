@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RyftCoin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 class="logo">RYFTCOIN</h1>
+      <p class="tagline">sistem çalışıyor mu test edelim</p>
+    </header>
+
+    <main>
+      <!-- Frontend Test -->
+      <section class="card">
+        <h2>🖥️ Frontend</h2>
+        <p id="frontend-status">TypeScript yükleniyor...</p>
+        <button id="test-btn">Frontend Test Et</button>
+        <p id="frontend-result" class="result"></p>
+      </section>
+
+      <!-- Backend Test -->
+      <section class="card">
+        <h2>⚙️ Backend</h2>
+        <p>API bağlantısı test ediliyor</p>
+        <button id="api-btn">Backend Test Et</button>
+        <p id="api-result" class="result"></p>
+      </section>
+
+      <!-- Storage Test -->
+      <section class="card">
+        <h2>💾 Storage</h2>
+        <p>localStorage (SQL yok)</p>
+        <button id="storage-btn">Veri Kaydet & Oku</button>
+        <p id="storage-result" class="result"></p>
+      </section>
+    </main>
+
+    <footer>
+      <p id="timestamp"></p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
