@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoFaucet — Ücretsiz Kripto Kazan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131f;
+      --border: #1e1e30;
+      --accent: #7c3aed;
+      --accent2: #06b6d4;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --success: #10b981;
+      --error: #ef4444;
+      --glow: 0 0 40px rgba(124, 58, 237, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Arka plan animasyonu */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 20%, rgba(124,58,237,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 20px 40px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .logo-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      box-shadow: var(--glow);
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 16px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* Bakiye kartı */
+    .balance-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .balance-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-family: 'Space Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+
+    .balance-amount {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--accent2);
+      font-family: 'Space Mono', monospace;
+    }
+
+    .refresh-btn {
+      background: var(--border);
+      border: none;
+      border-radius: 10px;
+      width: 44px; height: 44px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 18px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .refresh-btn:hover { background: var(--accent); color: white; }
+    .refresh-btn.spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Form kartı */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+    }
+
+    .card h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 28px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    input, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Space Mono', monospace;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+
+    select option { background: var(--surface); }
+
+    /* Miktar row */
+    .amount-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    /* Submit butonu */
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent), #9333ea);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: var(--glow);
+      letter-spacing: 0.03em;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 0 60px rgba(124,58,237,0.4);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Mesaj kutusu */
+    .message {
+      margin-top: 20px;
+      padding: 16px 18px;
+      border-radius: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+      word-break: break-all;
+    }
+
+    .message.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    .message.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--error);
+    }
+
+    /* TXID linki */
+    .txid a {
+      color: var(--accent2);
+      text-decoration: none;
+    }
+    .txid a:hover { text-decoration: underline; }
+
+    /* Adres doğrulama badge */
+    .addr-status {
+      font-size: 12px;
+      font-family: 'Space Mono', monospace;
+      margin-top: 6px;
+      height: 16px;
+    }
+    .addr-status.valid { color: var(--success); }
+    .addr-status.invalid { color: var(--error); }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* Loading dots */
+    .dots::after {
+      content: '';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <span class="logo-text">CryptoFaucet</span>
+  </div>
+  <p>FaucetPay adresine anında kripto gönder</p>
+</header>
+
+<main>
+  <!-- Bakiye Kartı -->
+  <div class="balance-card">
+    <div>
+      <div class="balance-label">Faucet Bakiyesi</div>
+      <div class="balance-amount" id="balanceDisplay">—</div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" title="Yenile">↻</button>
+  </div>
+
+  <!-- Ana Form -->
+  <div class="card">
+    <h2>💸 Para Çek</h2>
+
+    <div class="field">
+      <label>Para Birimi</label>
+      <select id="currency">
+        <option value="BTC">₿ Bitcoin (BTC)</option>
+        <option value="ETH">Ξ Ethereum (ETH)</option>
+        <option value="LTC">Ł Litecoin (LTC)</option>
+        <option value="DOGE">Ð Dogecoin (DOGE)</option>
+        <option value="TRX">⟳ TRON (TRX)</option>
+        <option value="USDT">₮ Tether (USDT)</option>
+        <option value="BNB">BNB Chain (BNB)</option>
+        <option value="XRP">◎ Ripple (XRP)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>FaucetPay Adresi</label>
+      <input
+        type="text"
+        id="address"
+        placeholder="Kripto adresinizi girin..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div class="addr-status" id="addrStatus"></div>
+    </div>
+
+    <div class="field">
+      <label>Miktar (Satoshi / Wei vb.)</label>
+      <input
+        type="number"
+        id="amount"
+        placeholder="örn: 100"
+        min="1"
+        step="1"
+      />
+    </div>
+
+    <button class="submit-btn" id="sendBtn">⚡ Gönder</button>
+
+    <div class="message" id="message"></div>
+  </div>
+</main>
+
+<footer>powered by FaucetPay API</footer>
+
+<script>
+  // 🔧 BURAYA KENDİ RAILWAY URL'NİZİ YAZIN
+  const BACKEND_URL = 'https://YOUR-APP.railway.app';
+
+  const currencyEl   = document.getElementById('currency');
+  const addressEl    = document.getElementById('address');
+  const amountEl     = document.getElementById('amount');
+  const sendBtn      = document.getElementById('sendBtn');
+  const messageEl    = document.getElementById('message');
+  const balanceEl    = document.getElementById('balanceDisplay');
+  const refreshBtn   = document.getElementById('refreshBtn');
+  const addrStatus   = document.getElementById('addrStatus');
+
+  // Bakiye yükle
+  async function loadBalance() {
+    const currency = currencyEl.value;
+    balanceEl.textContent = '...';
+    refreshBtn.classList.add('spinning');
+    try {
+      const res  = await fetch(`${BACKEND_URL}/balance?currency=${currency}`);
+      const data = await res.json();
+      if (data.balance !== undefined) {
+        balanceEl.textContent = `${data.balance} sat  (${data.balance_bitcoin ?? data.balance} ${currency})`;
+      } else {
+        balanceEl.textContent = data.message ?? 'Bilinmiyor';
+      }
+    } catch {
+      balanceEl.textContent = 'Bağlantı hatası';
+    } finally {
+      refreshBtn.classList.remove('spinning');
+    }
+  }
+
+  currencyEl.addEventListener('change', loadBalance);
+  refreshBtn.addEventListener('click', loadBalance);
+  loadBalance();
+
+  // Adres doğrulama (debounced)
+  let addrTimer;
+  addressEl.addEventListener('input', () => {
+    addrStatus.textContent = '';
+    addrStatus.className = 'addr-status';
+    clearTimeout(addrTimer);
+    const val = addressEl.value.trim();
+    if (val.length < 10) return;
+    addrTimer = setTimeout(async () => {
+      addrStatus.textContent = 'Kontrol ediliyor...';
+      try {
+        const res  = await fetch(`${BACKEND_URL}/check-address`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: val, currency: currencyEl.value }),
+        });
+        const data = await res.json();
+        if (data.status === 200) {
+          addrStatus.textContent = '✓ FaucetPay hesabına bağlı';
+          addrStatus.className = 'addr-status valid';
+        } else {
+          addrStatus.textContent = '✗ FaucetPay\'e kayıtlı değil';
+          addrStatus.className = 'addr-status invalid';
+        }
+      } catch {
+        addrStatus.textContent = '';
+      }
+    }, 700);
+  });
+
+  // Para gönder
+  sendBtn.addEventListener('click', async () => {
+    const currency = currencyEl.value;
+    const address  = addressEl.value.trim();
+    const amount   = amountEl.value.trim();
+
+    messageEl.className = 'message';
+    messageEl.textContent = '';
+
+    if (!address || !amount || Number(amount) <= 0) {
+      showMsg('error', '⚠️ Lütfen geçerli bir adres ve miktar girin.');
+      return;
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="dots">Gönderiliyor</span>';
+
+    try {
+      const res  = await fetch(`${BACKEND_URL}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, amount, currency }),
+      });
+      const data = await res.json();
+
+      if (data.status === 200 || data.message === 'OK') {
+        const txid = data.payout_id ?? data.txid ?? '';
+        showMsg('success', `✅ Başarıyla gönderildi!\nMiktar: ${amount} sat → ${address}${txid ? `\nTX ID: ${txid}` : ''}`);
+        loadBalance();
+      } else {
+        showMsg('error', `❌ Hata: ${data.message ?? JSON.stringify(data)}`);
+      }
+    } catch (err) {
+      showMsg('error', '❌ Sunucuya bağlanılamadı: ' + err.message);
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '⚡ Gönder';
+    }
+  });
+
+  function showMsg(type, text) {
+    messageEl.className = `message ${type}`;
+    messageEl.textContent = text;
+  }
+</script>
+
+</body>
+</html>
