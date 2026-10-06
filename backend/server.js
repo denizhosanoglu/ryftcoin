@@ -87,13 +87,10 @@ const app = express();
 app.set('trust proxy', Number(env.TRUST_PROXY ?? 1)); // Render/Railway tek proxy arkasında
 app.disable('x-powered-by');
 app.use(helmet());
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(',').map(url => url.trim()) 
-  : [];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: ALLOWED_ORIGINS,
     methods: ['GET', 'OPTIONS'] // Tarayıcı ön kontrollerine (preflight) izin verir
   })
 );
