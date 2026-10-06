@@ -1,7 +1,7 @@
 {
   "name": "ryftcoin-backend",
-  "version": "2.0.0",
-  "description": "RYFTcoin withdraw backend (FaucetPay + Cloudflare Turnstile)",
+  "version": "3.0.0",
+  "description": "RYFTcoin: FaucetPay faucet bakiyesini gosteren kucuk servis",
   "main": "server.js",
   "engines": {
     "node": ">=18"

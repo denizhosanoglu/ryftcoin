@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RYFTcoin — Kripto Çek</title>
+  <title>RYFTcoin — Faucet Bakiyesi</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
   <style>
     :root {
       --bg: #0a0a0f;
@@ -16,9 +15,7 @@
       --accent2: #06b6d4;
       --text: #e2e8f0;
       --muted: #64748b;
-      --success: #10b981;
       --error: #ef4444;
-      --warn: #f59e0b;
       --glow: 0 0 40px rgba(124, 58, 237, 0.3);
     }
 
@@ -74,12 +71,6 @@
       -webkit-text-fill-color: transparent;
     }
 
-    header p {
-      color: var(--muted);
-      font-size: 16px;
-      font-family: 'Space Mono', monospace;
-    }
-
     main {
       position: relative;
       z-index: 1;
@@ -88,20 +79,6 @@
       padding: 0 20px 60px;
     }
 
-    .banner {
-      display: none;
-      margin-bottom: 20px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      line-height: 1.5;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      color: var(--warn);
-    }
-    .banner.show { display: block; }
-
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -109,116 +86,71 @@
       padding: 32px;
     }
 
-    .card h2 {
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 8px;
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
-    .info {
+    .label {
       color: var(--muted);
-      font-family: 'Space Mono', monospace;
       font-size: 13px;
-      line-height: 1.6;
-      margin-bottom: 28px;
-    }
-    .info strong { color: var(--accent2); font-weight: 700; }
-
-    .field { margin-bottom: 20px; }
-
-    label {
-      display: block;
-      font-size: 13px;
-      color: var(--muted);
       font-family: 'Space Mono', monospace;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
+      letter-spacing: 0.1em;
     }
 
-    input, select {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      color: var(--text);
-      font-size: 15px;
-      font-family: 'Space Mono', monospace;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      -webkit-appearance: none;
-    }
-
-    input:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
-    }
-
-    select option { background: var(--surface); }
-
-    .hint {
-      font-size: 12px;
-      color: var(--muted);
-      font-family: 'Space Mono', monospace;
-      margin-top: 6px;
-    }
-
-    #turnstile { margin: 4px 0 8px; min-height: 65px; }
-
-    .submit-btn {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, var(--accent), #9333ea);
+    .refresh-btn {
+      background: var(--border);
       border: none;
-      border-radius: 14px;
-      color: white;
-      font-family: 'Syne', sans-serif;
+      border-radius: 10px;
+      width: 44px; height: 44px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 18px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .refresh-btn:hover { background: var(--accent); color: white; }
+    .refresh-btn.spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .balance-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+    }
+    .balance-row:first-child { border-top: none; padding-top: 0; }
+
+    .balance-amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent2);
+      font-family: 'Space Mono', monospace;
+      word-break: break-all;
+    }
+
+    .balance-currency {
       font-size: 16px;
       font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
-      box-shadow: var(--glow);
-      letter-spacing: 0.03em;
-    }
-
-    .submit-btn:hover:not(:disabled) {
-      opacity: 0.9;
-      transform: translateY(-1px);
-      box-shadow: 0 0 60px rgba(124,58,237,0.4);
-    }
-
-    .submit-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .message {
-      margin-top: 20px;
-      padding: 16px 18px;
-      border-radius: 12px;
+      color: var(--muted);
       font-family: 'Space Mono', monospace;
-      font-size: 13px;
+    }
+
+    .status {
+      margin-top: 20px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
       line-height: 1.6;
-      display: none;
-      word-break: break-word;
-      white-space: pre-line;
+      min-height: 20px;
     }
-
-    .message.success {
-      display: block;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: var(--success);
-    }
-
-    .message.error {
-      display: block;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: var(--error);
-    }
+    .status.error { color: var(--error); }
 
     footer {
       position: relative;
@@ -229,18 +161,6 @@
       font-size: 13px;
       font-family: 'Space Mono', monospace;
     }
-
-    .dots::after {
-      content: '';
-      animation: dots 1.2s steps(4, end) infinite;
-    }
-    @keyframes dots {
-      0%   { content: ''; }
-      25%  { content: '.'; }
-      50%  { content: '..'; }
-      75%  { content: '...'; }
-      100% { content: ''; }
-    }
   </style>
 </head>
 <body>
@@ -250,169 +170,94 @@
     <div class="logo-icon">⚡</div>
     <span class="logo-text">RYFTcoin</span>
   </div>
-  <p>Kripto paranı FaucetPay adresine çek</p>
 </header>
 
 <main>
-  <div class="banner" id="testBanner">
-    Test modu: şu an gerçek ödeme yapılmıyor, çekimler sadece denemedir.
-  </div>
-
   <div class="card">
-    <h2>💸 Withdraw</h2>
-    <p class="info" id="info">Ayarlar yükleniyor...</p>
-
-    <div class="field">
-      <label for="currency">Para Birimi</label>
-      <select id="currency" disabled></select>
+    <div class="card-head">
+      <span class="label">Faucet Bakiyesi</span>
+      <button class="refresh-btn" id="refreshBtn" title="Yenile" aria-label="Yenile">↻</button>
     </div>
 
-    <div class="field">
-      <label for="address">FaucetPay Adresi</label>
-      <input
-        type="text"
-        id="address"
-        placeholder="FaucetPay'e bağlı adresin veya e-postan"
-        autocomplete="off"
-        spellcheck="false"
-        maxlength="128"
-      />
-      <div class="hint">Adres, FaucetPay hesabına kayıtlı olmalı.</div>
+    <div id="balances" aria-live="polite">
+      <div class="balance-row">
+        <span class="balance-amount">—</span>
+      </div>
     </div>
 
-    <div id="turnstile"></div>
-
-    <button class="submit-btn" id="withdrawBtn" disabled>Withdraw</button>
-
-    <div class="message" id="message" role="status"></div>
+    <div class="status" id="status">Yükleniyor...</div>
   </div>
 </main>
 
 <footer>powered by FaucetPay</footer>
 
 <script>
-  // Backend adresin (Railway/Render vb.). Sonunda "/" olmasın.
+  // Backend adresin (Render/Railway vb.). Sonunda "/" olmasın.
   const BACKEND_URL = 'https://ryftcoin-production.up.railway.app';
 
-  const currencyEl = document.getElementById('currency');
-  const addressEl  = document.getElementById('address');
-  const btn        = document.getElementById('withdrawBtn');
-  const messageEl  = document.getElementById('message');
-  const infoEl     = document.getElementById('info');
-  const bannerEl   = document.getElementById('testBanner');
+  const balancesEl = document.getElementById('balances');
+  const statusEl   = document.getElementById('status');
+  const refreshBtn = document.getElementById('refreshBtn');
 
-  let config = null;
-  let tsReady = false;
-  let widgetId = null;
-  let token = '';
+  let loading = false;
 
-  function showMsg(type, text) {
-    messageEl.className = 'message ' + type;
-    messageEl.textContent = text;
+  function setStatus(text, isError) {
+    statusEl.textContent = text;
+    statusEl.className = 'status' + (isError ? ' error' : '');
   }
 
-  function updateButton() {
-    btn.disabled = !(config && token);
-  }
-
-  // Turnstile script'i yüklenince
-  window.onTurnstileLoad = function () {
-    tsReady = true;
-    renderWidget();
-  };
-
-  function renderWidget() {
-    if (!tsReady || !config || widgetId !== null) return;
-    if (!config.turnstileSiteKey) {
-      showMsg('error', 'Bot doğrulaması yapılandırılmamış (site anahtarı yok).');
-      return;
-    }
-    widgetId = turnstile.render('#turnstile', {
-      sitekey: config.turnstileSiteKey,
-      theme: 'dark',
-      callback: function (t) { token = t; updateButton(); },
-      'expired-callback': function () { token = ''; updateButton(); },
-      'error-callback': function () { token = ''; updateButton(); },
-    });
-  }
-
-  async function loadConfig() {
-    try {
-      const res = await fetch(BACKEND_URL + '/config');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      config = await res.json();
-
-      currencyEl.innerHTML = '';
-      for (const c of config.currencies) {
-        const opt = document.createElement('option');
-        opt.value = c.code;
-        opt.textContent = c.code + '  (' + c.amount + ' ' + c.code + ')';
-        currencyEl.appendChild(opt);
-      }
-      currencyEl.disabled = false;
-
-      const first = config.currencies[0];
-      infoEl.innerHTML = '';
-      infoEl.append('Her çekimde ');
-      const strong = document.createElement('strong');
-      strong.textContent = first.amount + ' ' + first.code;
-      infoEl.append(strong, ' gönderilir. Her adres ve her IP için ' + config.cooldownMinutes + ' dakikada bir çekebilirsin.');
-
-      if (config.mode === 'test') bannerEl.classList.add('show');
-      renderWidget();
-      updateButton();
-    } catch (err) {
-      infoEl.textContent = 'Sunucuya ulaşılamıyor, biraz sonra tekrar dene.';
+  function render(balances) {
+    balancesEl.innerHTML = '';
+    for (const b of balances) {
+      const row = document.createElement('div');
+      row.className = 'balance-row';
+      const amount = document.createElement('span');
+      amount.className = 'balance-amount';
+      amount.textContent = b.amount;
+      const cur = document.createElement('span');
+      cur.className = 'balance-currency';
+      cur.textContent = b.currency;
+      row.append(amount, cur);
+      balancesEl.appendChild(row);
     }
   }
 
-  btn.addEventListener('click', async function () {
-    const address  = addressEl.value.trim();
-    const currency = currencyEl.value;
+  async function loadBalance() {
+    if (loading) return;
+    loading = true;
+    refreshBtn.classList.add('spinning');
 
-    messageEl.className = 'message';
-    messageEl.textContent = '';
-
-    if (address.length < 3) {
-      showMsg('error', 'Lütfen geçerli bir adres gir.');
-      return;
-    }
-    if (!token) {
-      showMsg('error', 'Önce bot doğrulamasını tamamla.');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="dots">Gönderiliyor</span>';
+    // Ücretsiz sunucu uykudaysa ilk istek yavaş olabilir, kullanıcıyı bilgilendir
+    const slowTimer = setTimeout(function () {
+      setStatus('Sunucu uyanıyor olabilir, bu 1 dakikaya kadar sürebilir...', false);
+    }, 4000);
 
     try {
-      const res = await fetch(BACKEND_URL + '/withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: address, currency: currency, token: token }),
-      });
+      const controller = new AbortController();
+      const abortTimer = setTimeout(function () { controller.abort(); }, 90000);
+      const res = await fetch(BACKEND_URL + '/balance', { signal: controller.signal });
+      clearTimeout(abortTimer);
       const data = await res.json().catch(function () { return {}; });
 
       if (res.ok && data.success) {
-        let text = '✅ ' + data.amount + ' ' + data.currency + ' gönderildi.';
-        if (data.id) text += '\nİşlem No: ' + data.id;
-        if (data.test) text += '\n(Test modu, gerçek ödeme yapılmadı.)';
-        showMsg('success', text);
+        render(data.balances);
+        const time = new Date(data.updatedAt).toLocaleTimeString('tr-TR');
+        setStatus('Son güncelleme: ' + time + (data.stale ? ' (FaucetPay şu an yanıt vermiyor, eski değer)' : ''), false);
       } else {
-        showMsg('error', '❌ ' + (data.message || 'Bir hata oluştu.'));
+        setStatus(data.message || 'Bakiye alınamadı.', true);
       }
     } catch (err) {
-      showMsg('error', '❌ Sunucuya bağlanılamadı.');
+      setStatus('Sunucuya ulaşılamıyor.', true);
     } finally {
-      // Turnstile token'ı tek kullanımlık: her denemeden sonra yenile
-      token = '';
-      if (widgetId !== null) turnstile.reset(widgetId);
-      btn.textContent = 'Withdraw';
-      updateButton();
+      clearTimeout(slowTimer);
+      refreshBtn.classList.remove('spinning');
+      loading = false;
     }
-  });
+  }
 
-  loadConfig();
+  refreshBtn.addEventListener('click', loadBalance);
+  loadBalance();
+  setInterval(loadBalance, 60000);
 </script>
 
 </body>
