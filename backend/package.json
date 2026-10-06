@@ -1,14 +1,18 @@
 {
-  "name": "faucetpay-backend",
-  "version": "1.0.0",
-  "description": "FaucetPay API backend for Railway",
+  "name": "ryftcoin-backend",
+  "version": "2.0.0",
+  "description": "RYFTcoin withdraw backend (FaucetPay + Cloudflare Turnstile)",
   "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "node-fetch": "^2.7.0"
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0"
   }
 }

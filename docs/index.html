@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CryptoFaucet — Ücretsiz Kripto Kazan</title>
+  <title>RYFTcoin — Kripto Çek</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
   <style>
     :root {
       --bg: #0a0a0f;
@@ -17,6 +18,7 @@
       --muted: #64748b;
       --success: #10b981;
       --error: #ef4444;
+      --warn: #f59e0b;
       --glow: 0 0 40px rgba(124, 58, 237, 0.3);
     }
 
@@ -30,7 +32,6 @@
       overflow-x: hidden;
     }
 
-    /* Arka plan animasyonu */
     body::before {
       content: '';
       position: fixed;
@@ -87,51 +88,20 @@
       padding: 0 20px 60px;
     }
 
-    /* Bakiye kartı */
-    .balance-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .balance-label {
-      color: var(--muted);
-      font-size: 13px;
+    .banner {
+      display: none;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      border-radius: 12px;
       font-family: 'Space Mono', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--warn);
     }
+    .banner.show { display: block; }
 
-    .balance-amount {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--accent2);
-      font-family: 'Space Mono', monospace;
-    }
-
-    .refresh-btn {
-      background: var(--border);
-      border: none;
-      border-radius: 10px;
-      width: 44px; height: 44px;
-      cursor: pointer;
-      color: var(--muted);
-      font-size: 18px;
-      transition: all 0.2s;
-      flex-shrink: 0;
-    }
-    .refresh-btn:hover { background: var(--accent); color: white; }
-    .refresh-btn.spinning { animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Form kartı */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -142,12 +112,19 @@
     .card h2 {
       font-size: 22px;
       font-weight: 800;
-      margin-bottom: 28px;
+      margin-bottom: 8px;
     }
 
-    .field {
-      margin-bottom: 20px;
+    .info {
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 28px;
     }
+    .info strong { color: var(--accent2); font-weight: 700; }
+
+    .field { margin-bottom: 20px; }
 
     label {
       display: block;
@@ -180,14 +157,15 @@
 
     select option { background: var(--surface); }
 
-    /* Miktar row */
-    .amount-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      margin-top: 6px;
     }
 
-    /* Submit butonu */
+    #turnstile { margin: 4px 0 8px; min-height: 65px; }
+
     .submit-btn {
       width: 100%;
       padding: 16px;
@@ -216,7 +194,6 @@
       cursor: not-allowed;
     }
 
-    /* Mesaj kutusu */
     .message {
       margin-top: 20px;
       padding: 16px 18px;
@@ -225,7 +202,8 @@
       font-size: 13px;
       line-height: 1.6;
       display: none;
-      word-break: break-all;
+      word-break: break-word;
+      white-space: pre-line;
     }
 
     .message.success {
@@ -242,23 +220,6 @@
       color: var(--error);
     }
 
-    /* TXID linki */
-    .txid a {
-      color: var(--accent2);
-      text-decoration: none;
-    }
-    .txid a:hover { text-decoration: underline; }
-
-    /* Adres doğrulama badge */
-    .addr-status {
-      font-size: 12px;
-      font-family: 'Space Mono', monospace;
-      margin-top: 6px;
-      height: 16px;
-    }
-    .addr-status.valid { color: var(--success); }
-    .addr-status.invalid { color: var(--error); }
-
     footer {
       position: relative;
       z-index: 1;
@@ -269,7 +230,6 @@
       font-family: 'Space Mono', monospace;
     }
 
-    /* Loading dots */
     .dots::after {
       content: '';
       animation: dots 1.2s steps(4, end) infinite;
@@ -288,181 +248,171 @@
 <header>
   <div class="logo">
     <div class="logo-icon">⚡</div>
-    <span class="logo-text">CryptoFaucet</span>
+    <span class="logo-text">RYFTcoin</span>
   </div>
-  <p>FaucetPay adresine anında kripto gönder</p>
+  <p>Kripto paranı FaucetPay adresine çek</p>
 </header>
 
 <main>
-  <!-- Bakiye Kartı -->
-  <div class="balance-card">
-    <div>
-      <div class="balance-label">Faucet Bakiyesi</div>
-      <div class="balance-amount" id="balanceDisplay">—</div>
-    </div>
-    <button class="refresh-btn" id="refreshBtn" title="Yenile">↻</button>
+  <div class="banner" id="testBanner">
+    Test modu: şu an gerçek ödeme yapılmıyor, çekimler sadece denemedir.
   </div>
 
-  <!-- Ana Form -->
   <div class="card">
-    <h2>💸 Para Çek</h2>
+    <h2>💸 Withdraw</h2>
+    <p class="info" id="info">Ayarlar yükleniyor...</p>
 
     <div class="field">
-      <label>Para Birimi</label>
-      <select id="currency">
-        <option value="BTC">₿ Bitcoin (BTC)</option>
-        <option value="ETH">Ξ Ethereum (ETH)</option>
-        <option value="LTC">Ł Litecoin (LTC)</option>
-        <option value="DOGE">Ð Dogecoin (DOGE)</option>
-        <option value="TRX">⟳ TRON (TRX)</option>
-        <option value="USDT">₮ Tether (USDT)</option>
-        <option value="BNB">BNB Chain (BNB)</option>
-        <option value="XRP">◎ Ripple (XRP)</option>
-      </select>
+      <label for="currency">Para Birimi</label>
+      <select id="currency" disabled></select>
     </div>
 
     <div class="field">
-      <label>FaucetPay Adresi</label>
+      <label for="address">FaucetPay Adresi</label>
       <input
         type="text"
         id="address"
-        placeholder="Kripto adresinizi girin..."
+        placeholder="FaucetPay'e bağlı adresin veya e-postan"
         autocomplete="off"
         spellcheck="false"
+        maxlength="128"
       />
-      <div class="addr-status" id="addrStatus"></div>
+      <div class="hint">Adres, FaucetPay hesabına kayıtlı olmalı.</div>
     </div>
 
-    <div class="field">
-      <label>Miktar (Satoshi / Wei vb.)</label>
-      <input
-        type="number"
-        id="amount"
-        placeholder="örn: 100"
-        min="1"
-        step="1"
-      />
-    </div>
+    <div id="turnstile"></div>
 
-    <button class="submit-btn" id="sendBtn">⚡ Gönder</button>
+    <button class="submit-btn" id="withdrawBtn" disabled>Withdraw</button>
 
-    <div class="message" id="message"></div>
+    <div class="message" id="message" role="status"></div>
   </div>
 </main>
 
-<footer>powered by FaucetPay API</footer>
+<footer>powered by FaucetPay</footer>
 
 <script>
-  // 🔧 BURAYA KENDİ RAILWAY URL'NİZİ YAZIN
+  // Backend adresin (Railway/Render vb.). Sonunda "/" olmasın.
   const BACKEND_URL = 'https://ryftcoin-production.up.railway.app';
 
-  const currencyEl   = document.getElementById('currency');
-  const addressEl    = document.getElementById('address');
-  const amountEl     = document.getElementById('amount');
-  const sendBtn      = document.getElementById('sendBtn');
-  const messageEl    = document.getElementById('message');
-  const balanceEl    = document.getElementById('balanceDisplay');
-  const refreshBtn   = document.getElementById('refreshBtn');
-  const addrStatus   = document.getElementById('addrStatus');
+  const currencyEl = document.getElementById('currency');
+  const addressEl  = document.getElementById('address');
+  const btn        = document.getElementById('withdrawBtn');
+  const messageEl  = document.getElementById('message');
+  const infoEl     = document.getElementById('info');
+  const bannerEl   = document.getElementById('testBanner');
 
-  // Bakiye yükle
-  async function loadBalance() {
-    const currency = currencyEl.value;
-    balanceEl.textContent = '...';
-    refreshBtn.classList.add('spinning');
+  let config = null;
+  let tsReady = false;
+  let widgetId = null;
+  let token = '';
+
+  function showMsg(type, text) {
+    messageEl.className = 'message ' + type;
+    messageEl.textContent = text;
+  }
+
+  function updateButton() {
+    btn.disabled = !(config && token);
+  }
+
+  // Turnstile script'i yüklenince
+  window.onTurnstileLoad = function () {
+    tsReady = true;
+    renderWidget();
+  };
+
+  function renderWidget() {
+    if (!tsReady || !config || widgetId !== null) return;
+    if (!config.turnstileSiteKey) {
+      showMsg('error', 'Bot doğrulaması yapılandırılmamış (site anahtarı yok).');
+      return;
+    }
+    widgetId = turnstile.render('#turnstile', {
+      sitekey: config.turnstileSiteKey,
+      theme: 'dark',
+      callback: function (t) { token = t; updateButton(); },
+      'expired-callback': function () { token = ''; updateButton(); },
+      'error-callback': function () { token = ''; updateButton(); },
+    });
+  }
+
+  async function loadConfig() {
     try {
-      const res  = await fetch(`${BACKEND_URL}/balance?currency=${currency}`);
-      const data = await res.json();
-      if (data.balance !== undefined) {
-        balanceEl.textContent = `${data.balance} sat  (${data.balance_bitcoin ?? data.balance} ${currency})`;
-      } else {
-        balanceEl.textContent = data.message ?? 'Bilinmiyor';
+      const res = await fetch(BACKEND_URL + '/config');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      config = await res.json();
+
+      currencyEl.innerHTML = '';
+      for (const c of config.currencies) {
+        const opt = document.createElement('option');
+        opt.value = c.code;
+        opt.textContent = c.code + '  (' + c.amount + ' ' + c.code + ')';
+        currencyEl.appendChild(opt);
       }
-    } catch {
-      balanceEl.textContent = 'Bağlantı hatası';
-    } finally {
-      refreshBtn.classList.remove('spinning');
+      currencyEl.disabled = false;
+
+      const first = config.currencies[0];
+      infoEl.innerHTML = '';
+      infoEl.append('Her çekimde ');
+      const strong = document.createElement('strong');
+      strong.textContent = first.amount + ' ' + first.code;
+      infoEl.append(strong, ' gönderilir. Her adres ve her IP için ' + config.cooldownMinutes + ' dakikada bir çekebilirsin.');
+
+      if (config.mode === 'test') bannerEl.classList.add('show');
+      renderWidget();
+      updateButton();
+    } catch (err) {
+      infoEl.textContent = 'Sunucuya ulaşılamıyor, biraz sonra tekrar dene.';
     }
   }
 
-  currencyEl.addEventListener('change', loadBalance);
-  refreshBtn.addEventListener('click', loadBalance);
-  loadBalance();
-
-  // Adres doğrulama (debounced)
-  let addrTimer;
-  addressEl.addEventListener('input', () => {
-    addrStatus.textContent = '';
-    addrStatus.className = 'addr-status';
-    clearTimeout(addrTimer);
-    const val = addressEl.value.trim();
-    if (val.length < 10) return;
-    addrTimer = setTimeout(async () => {
-      addrStatus.textContent = 'Kontrol ediliyor...';
-      try {
-        const res  = await fetch(`${BACKEND_URL}/check-address`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address: val, currency: currencyEl.value }),
-        });
-        const data = await res.json();
-        if (data.status === 200) {
-          addrStatus.textContent = '✓ FaucetPay hesabına bağlı';
-          addrStatus.className = 'addr-status valid';
-        } else {
-          addrStatus.textContent = '✗ FaucetPay\'e kayıtlı değil';
-          addrStatus.className = 'addr-status invalid';
-        }
-      } catch {
-        addrStatus.textContent = '';
-      }
-    }, 700);
-  });
-
-  // Para gönder
-  sendBtn.addEventListener('click', async () => {
-    const currency = currencyEl.value;
+  btn.addEventListener('click', async function () {
     const address  = addressEl.value.trim();
-    const amount   = amountEl.value.trim();
+    const currency = currencyEl.value;
 
     messageEl.className = 'message';
     messageEl.textContent = '';
 
-    if (!address || !amount || Number(amount) <= 0) {
-      showMsg('error', '⚠️ Lütfen geçerli bir adres ve miktar girin.');
+    if (address.length < 3) {
+      showMsg('error', 'Lütfen geçerli bir adres gir.');
+      return;
+    }
+    if (!token) {
+      showMsg('error', 'Önce bot doğrulamasını tamamla.');
       return;
     }
 
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<span class="dots">Gönderiliyor</span>';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="dots">Gönderiliyor</span>';
 
     try {
-      const res  = await fetch(`${BACKEND_URL}/send`, {
+      const res = await fetch(BACKEND_URL + '/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, amount, currency }),
+        body: JSON.stringify({ address: address, currency: currency, token: token }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(function () { return {}; });
 
-      if (data.status === 200 || data.message === 'OK') {
-        const txid = data.payout_id ?? data.txid ?? '';
-        showMsg('success', `✅ Başarıyla gönderildi!\nMiktar: ${amount} sat → ${address}${txid ? `\nTX ID: ${txid}` : ''}`);
-        loadBalance();
+      if (res.ok && data.success) {
+        let text = '✅ ' + data.amount + ' ' + data.currency + ' gönderildi.';
+        if (data.id) text += '\nİşlem No: ' + data.id;
+        if (data.test) text += '\n(Test modu, gerçek ödeme yapılmadı.)';
+        showMsg('success', text);
       } else {
-        showMsg('error', `❌ Hata: ${data.message ?? JSON.stringify(data)}`);
+        showMsg('error', '❌ ' + (data.message || 'Bir hata oluştu.'));
       }
     } catch (err) {
-      showMsg('error', '❌ Sunucuya bağlanılamadı: ' + err.message);
+      showMsg('error', '❌ Sunucuya bağlanılamadı.');
     } finally {
-      sendBtn.disabled = false;
-      sendBtn.textContent = '⚡ Gönder';
+      // Turnstile token'ı tek kullanımlık: her denemeden sonra yenile
+      token = '';
+      if (widgetId !== null) turnstile.reset(widgetId);
+      btn.textContent = 'Withdraw';
+      updateButton();
     }
   });
 
-  function showMsg(type, text) {
-    messageEl.className = `message ${type}`;
-    messageEl.textContent = text;
-  }
+  loadConfig();
 </script>
 
 </body>
